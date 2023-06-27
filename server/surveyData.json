@@ -2,13 +2,13 @@
   "Survey": {
     "I feel particularly pleased with the way I am": "Strongly Agree",
     "I feel particularly healthy": "Agree",
-    "I am optimistic about the future": "Neutral",
-    "I feel life is very rewarding": "Disagree",
-    "I have a particular sense of meaning and purpose in life": "Strongly Disagree",
-    "I find beauty in some things": "Disagree",
+    "I feel life is very rewarding": "Agree",
+    "I am optimistic about the future": "Agree",
+    "I have a particular sense of meaning and purpose in life": "Neutral",
     "I have happy memories of the past": "Neutral",
     "I wake up feeling well rested": "Agree",
-    "I have a positive impact on others around me": "Strongly Disagree",
-    "I am well satisfied about everything in my life": "Neutral"
+    "I find beauty in some things": "Agree",
+    "I have a positive impact on others around me": "Agree",
+    "I am well satisfied about everything in my life": "Strongly Agree"
   }
 }
