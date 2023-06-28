@@ -1,6 +1,11 @@
 # INF2003_13
+###Frontend Setup
+cd client
 npm install
 npm start
 
-pip install flask
+###Backend Setup
+pip install flask flask-cors
 flask run
+
+For frontend commit, do not push node_modules folder to Git
