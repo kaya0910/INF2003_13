@@ -1,8 +1,8 @@
 # INF2003_13
 ## Frontend Setup
-### cd client
-### npm install
-### npm start
+#### cd client
+#### npm install
+#### npm start
 
 ## Backend Setup
 #### pip install flask flask-cors
