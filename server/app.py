@@ -2,13 +2,57 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
 import random
+from pymongo import MongoClient
+import os
+client = MongoClient("mongodb://localhost:27017")
+db = client["happiness"]
+collection = db["happiness_survey_data"]
 
 app = Flask(__name__)
 CORS(app)
 
 
+
 def get_random_integer(minimum, maximum):
     return random.randint(minimum, maximum)
+
+# save one response per json file to the database
+# @app.route("/survey", methods=["POST"])
+# def save_survey_data():
+#     survey_data = request.get_json()
+#
+#     # Save survey data to a JSON file
+#     with open("data/survey_data.json", "w") as file:
+#         json.dump(survey_data, file)
+#
+#     return jsonify({"message": "Survey data created successfully"})
+
+# save multiple responses per json file to the database
+# how to use: open mongoDBcompass, connection: mongodb://localhost:27017
+@app.route("/survey", methods=["POST"])
+def save_survey_data():
+    survey_data = request.get_json()
+
+    # Create a list to store the survey responses
+    responses = []
+
+    # Check if the JSON file exists
+    if os.path.exists("data/survey_data.json"):
+        # Load existing survey responses from the JSON file
+        with open("data/survey_data.json", "r") as file:
+            responses = json.load(file)
+
+    # Append the new survey response to the list
+    responses.append(survey_data)
+
+    # Save survey data to a JSON file
+    with open("data/survey_data.json", "w") as file:
+        json.dump(responses, file)
+
+    return jsonify({"message": "Survey data created successfully"})
+
+
+
 
 
 @app.route("/users", methods=["GET"])
@@ -127,3 +171,5 @@ def edit_survey():
 
 if __name__ == "__main__":
     app.run()
+
+
