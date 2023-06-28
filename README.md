@@ -1,10 +1,10 @@
 # INF2003_13
-###Frontend Setup
+## Frontend Setup
 cd client
 npm install
 npm start
 
-###Backend Setup
+## Backend Setup
 pip install flask flask-cors
 flask run
 
