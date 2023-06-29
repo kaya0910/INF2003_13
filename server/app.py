@@ -47,7 +47,7 @@ def save_survey_data():
 
     # Save survey data to a JSON file
     with open("data/survey_data.json", "w") as file:
-        json.dump(responses, file)
+        json.dump(responses, file, indent=4)
 
     return jsonify({"message": "Survey data created successfully"})
 
