@@ -4,12 +4,84 @@ import json
 import random
 from pymongo import MongoClient
 import os
+from flask_mysqldb import MySQL
 client = MongoClient("mongodb://localhost:27017")
 db = client["happiness"]
 collection = db["happiness_survey_data"]
 
 app = Flask(__name__)
 CORS(app)
+
+# Configure MySQL connection
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] = ''
+app.config['MYSQL_DB'] = 'happydb'
+
+# Initialize MySQL
+mysql = MySQL(app)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login(): 
+    data = request.get_json()
+    print(data)
+    username = data["username"]
+    password = data["password"]
+    
+    # Create a MySQL cursor
+    cur = mysql.connection.cursor()
+
+    # Execute a SQL query
+    cur.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, password))
+
+    # Fetch one record
+    user = cur.fetchone()
+
+    # Close the connection
+    cur.close()
+
+    # Check if the user exists
+    if user:
+        if password == user[3]:
+            return jsonify({"message": "Login successful"})
+        else:
+            return jsonify({"message": "Invalid password"}), 401
+    else:
+        return jsonify({"message": "Invalid username"}), 401
+
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():  
+    data = request.get_json()
+    print(data)
+    username = data["username"]
+    password = data["password"]
+    name = data["name"]
+
+    # Create a MySQL cursor
+    cur = mysql.connection.cursor()
+
+    # Execute a SQL query
+    cur.execute("SELECT * FROM users WHERE username = %s", (username,))
+
+    # Fetch one record
+    user = cur.fetchone()
+
+    # Check if the user exists
+    if user:
+        return jsonify({"message": "Username already exists"}), 400
+    else:
+        # Execute a SQL query
+        cur.execute("INSERT INTO users (username, name, password) VALUES (%s, %s, %s)", (username, name, password))
+
+        # Commit the changes
+        mysql.connection.commit()
+
+        # Close the connection
+        cur.close()
+
+        return jsonify({"message": "Sign Up successfully"})
 
 
 
@@ -52,9 +124,6 @@ def save_survey_data():
     return jsonify({"message": "Survey data created successfully"})
 
 
-
-
-
 @app.route("/users", methods=["GET"])
 def get_users():
     with open("data/users.json", "r") as file:
@@ -82,13 +151,6 @@ def update_user(id):
 def delete_user(id):
     print(id)
     return jsonify({"message": "User deleted successfully"})
-
-
-@app.route("/login", methods=["POST"])
-def login():
-    user = request.get_json()
-    print(user)
-    return jsonify({"message": "Login successful"})
 
 
 @app.route("/survey", methods=["GET"])

@@ -31,7 +31,7 @@ const Register = () => {
     };
 
     axios
-      .post(BASE_URL + "/users", credentialData)
+      .post(BASE_URL + "/signup", credentialData)
       .then((res) => {
         console.log("Data updated successfully:", res.data);
       })
