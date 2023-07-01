@@ -14,23 +14,23 @@ export const json = (questions) => {
             requiredErrorText: "Please pick the option",
             columns: [
               {
-                value: "Strongly Agree",
+                value: "5",
                 text: "Strongly Agree",
               },
               {
-                value: "Agree",
+                value: "4",
                 text: "Agree",
               },
               {
-                value: "Neutral",
+                value: "3",
                 text: "Neutral",
               },
               {
-                value: "Disagree",
+                value: "2",
                 text: "Disagree",
               },
               {
-                value: "Strongly Disagree",
+                value: "1",
                 text: "Strongly Disagree",
               },
             ],

@@ -29,6 +29,8 @@ def get_random_integer(minimum, maximum):
 
 # save multiple responses per json file to the database
 # how to use: open mongoDBcompass, connection: mongodb://localhost:27017
+import uuid
+
 @app.route("/survey", methods=["POST"])
 def save_survey_data():
     survey_data = request.get_json()
@@ -42,14 +44,25 @@ def save_survey_data():
         with open("data/survey_data.json", "r") as file:
             responses = json.load(file)
 
+    # Generate the ID for the new survey response
+    if responses:
+        last_id = responses[-1]["id"]
+        survey_id = last_id + 1
+    else:
+        survey_id = 1
+
+    # Create a dictionary to store the survey response with ID
+    response_with_id = {"id": survey_id, "data": survey_data}
+
     # Append the new survey response to the list
-    responses.append(survey_data)
+    responses.append(response_with_id)
 
     # Save survey data to a JSON file
     with open("data/survey_data.json", "w") as file:
         json.dump(responses, file, indent=4)
 
     return jsonify({"message": "Survey data created successfully"})
+
 
 
 
