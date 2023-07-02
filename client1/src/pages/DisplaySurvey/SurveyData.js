@@ -11,6 +11,16 @@ const SurveyDataDisplay = () => {
     });
   }, []);
 
+  // Mapping of numeric values to labels
+  const answerLabels = {
+    5: "Strongly Agree",
+    4: "Agree",
+    3: "Neutral",
+    2: "Disagree",
+    1: "Strongly Disagree",
+  };
+
+
   return (
     <div>
       <h2>Survey Data</h2>
@@ -21,7 +31,7 @@ const SurveyDataDisplay = () => {
             <ul>
               {Object.entries(data.data.Survey).map(([question, answer]) => (
                 <li key={question}>
-                  <strong>{question}:</strong> {answer}
+                  <strong>{question}:</strong> {answerLabels[answer]}
                 </li>
               ))}
             </ul>
