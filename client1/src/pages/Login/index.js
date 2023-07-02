@@ -33,6 +33,7 @@ const Login = () => {
       .catch((error) => {
         console.error("Error updating data:", error);
         alert("Incorrect username or password");
+        navigate("/login");
       });
 
     navigate("/dashboard");

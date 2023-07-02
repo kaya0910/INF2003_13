@@ -5,6 +5,9 @@ import random
 from pymongo import MongoClient
 import os
 from flask_mysqldb import MySQL
+from werkzeug.security import generate_password_hash, check_password_hash
+
+
 client = MongoClient("mongodb://localhost:27017")
 db = client["happiness"]
 collection = db["happiness_survey_data"]
@@ -25,7 +28,6 @@ mysql = MySQL(app)
 @app.route("/login", methods=["GET", "POST"])
 def login(): 
     data = request.get_json()
-    print(data)
     username = data["username"]
     password = data["password"]
     
@@ -33,7 +35,7 @@ def login():
     cur = mysql.connection.cursor()
 
     # Execute a SQL query
-    cur.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, password))
+    cur.execute("SELECT * FROM users WHERE username = %s", (username,))
 
     # Fetch one record
     user = cur.fetchone()
@@ -43,7 +45,7 @@ def login():
 
     # Check if the user exists
     if user:
-        if password == user[3]:
+        if check_password_hash(user[3], password):
             return jsonify({"message": "Login successful"})
         else:
             return jsonify({"message": "Invalid password"}), 401
@@ -54,10 +56,12 @@ def login():
 @app.route("/signup", methods=["GET", "POST"])
 def signup():  
     data = request.get_json()
-    print(data)
     username = data["username"]
     password = data["password"]
     name = data["name"]
+
+    # Hash the password
+    hased_password = generate_password_hash(password)
 
     # Create a MySQL cursor
     cur = mysql.connection.cursor()
@@ -72,8 +76,10 @@ def signup():
     if user:
         return jsonify({"message": "Username already exists"}), 400
     else:
+        print(hased_password)
+
         # Execute a SQL query
-        cur.execute("INSERT INTO users (username, name, password) VALUES (%s, %s, %s)", (username, name, password))
+        cur.execute("INSERT INTO users (username, name, password) VALUES (%s, %s, %s)", (username, name, hased_password))
 
         # Commit the changes
         mysql.connection.commit()
