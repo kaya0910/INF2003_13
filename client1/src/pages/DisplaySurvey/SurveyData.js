@@ -5,11 +5,16 @@ import { BASE_URL } from "../../constants";
 const SurveyDataDisplay = () => {
   const [surveyData, setSurveyData] = useState([]);
 
-  useEffect(() => {
-    axios.get(BASE_URL + "/survey_data").then((res) => {
+useEffect(() => {
+  axios.get(BASE_URL + "/survey_data")
+    .then((res) => {
       setSurveyData(res.data);
+    })
+    .catch((error) => {
+      console.error("Error retrieving survey data:", error);
     });
-  }, []);
+}, []);
+
 
   // Mapping of numeric values to labels
   const answerLabels = {
@@ -29,10 +34,10 @@ const SurveyDataDisplay = () => {
       <h2>Survey Data</h2>
       <ul>
         {surveyData.map((data) => (
-          <li key={data.id}>
-            <strong>ID: {data.id}</strong>
+          <li key={data._id}>
+            <strong>ID: {data._id}</strong>
             <ul>
-              {Object.entries(data.data.Survey).map(([question, answer]) => (
+              {Object.entries(data.Survey).map(([question, answer]) => (
                 <li key={question}>
                   <strong>{question}:</strong> {answerLabels[answer]}
                 </li>

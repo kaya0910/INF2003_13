@@ -2,47 +2,53 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
 import random
-from pymongo import MongoClient
+import pymongo
+from pymongo import MongoClient, InsertOne, DeleteOne, ReplaceOne  #insertMany
+from pymongo.errors import BulkWriteError
+from bson.objectid import ObjectId
+
 import os
 client = MongoClient("mongodb://localhost:27017")
 db = client["happiness"]
-collection = db["happiness_survey_data"]
+collection = db["survey_data"]
+requesting = []
 
 app = Flask(__name__)
 CORS(app)
 
+# check if mongodb database exists
+dblist = client.list_database_names()
+if "happiness" in dblist:
+  print("The database exists.")
+else:
+    print("The database does not exist.")
+
+collectionlist = db.list_collection_names()
+if "survey_data" in collectionlist:
+  print("The collection exists.")
+else:
+    print("The collection does not exist.")
 
 
 def get_random_integer(minimum, maximum):
     return random.randint(minimum, maximum)
 
-# save one response per json file to the database
-# @app.route("/survey", methods=["POST"])
-# def save_survey_data():
-#     survey_data = request.get_json()
-#
-#     # Save survey data to a JSON file
-#     with open("data/survey_data.json", "w") as file:
-#         json.dump(survey_data, file)
-#
-#     return jsonify({"message": "Survey data created successfully"})
 
-# save multiple responses per json file to the database
-# how to use: open mongoDBcompass, connection: mongodb://localhost:27017
-import uuid
 
 @app.route("/survey", methods=["POST"])
 def save_survey_data():
     survey_data = request.get_json()
 
-    # Create a list to store the survey responses
-    responses = []
+    # Save survey data to MongoDB
+    save_to_mongoDB(survey_data)
 
     # Check if the JSON file exists
     if os.path.exists("data/survey_data.json"):
         # Load existing survey responses from the JSON file
         with open("data/survey_data.json", "r") as file:
             responses = json.load(file)
+    else:
+        responses = []
 
     # Generate the ID for the new survey response
     if responses:
@@ -51,29 +57,60 @@ def save_survey_data():
     else:
         survey_id = 1
 
-    # Create a dictionary to store the survey response with ID
-    response_with_id = {"id": survey_id, "data": survey_data}
+    # Create the survey response dictionary
+    response = {
+        "id": survey_id,
+        "Survey": survey_data["Survey"]
+    }
 
     # Append the new survey response to the list
-    responses.append(response_with_id)
+    responses.append(response)
 
     # Save survey data to a JSON file
     with open("data/survey_data.json", "w") as file:
         json.dump(responses, file, indent=4)
 
+    print("Data saved successfully.")
+
     return jsonify({"message": "Survey data created successfully"})
 
+
+def save_to_mongoDB(survey_data):
+    # Generate the ID for the new survey response in MongoDB
+    last_id = collection.count_documents({})
+    survey_id = last_id + 1
+
+    # Create the survey response document
+    response = {
+        "_id": survey_id,
+        "Survey": survey_data["Survey"]
+    }
+
+    # Insert the document into the MongoDB collection
+    try:
+        result = collection.insert_one(response)
+        print("Data saved to MongoDB successfully.")
+    except Exception as e:
+        print("Error saving data to MongoDB:", str(e))
+
+
+
+
 # Read the survey_data.json file and return the data
+# @app.route("/survey_data", methods=["GET"])
+# def retrieve_survey_data():
+#     # Retrieve survey data from MongoDB
+#     survey_data = list(collection.find({}, {"_id": 1, "id": 1, "Survey": 1}))
+#
+#     return jsonify(survey_data)
+
 @app.route("/survey_data", methods=["GET"])
 def retrieve_survey_data():
-    # Check if the survey data file exists
-    if os.path.exists("data/survey_data.json"):
-        # Read the survey data from the JSON file
-        with open("data/survey_data.json", "r") as file:
-            survey_data = json.load(file)
-        return jsonify(survey_data)
-    else:
-        return jsonify([])  # Return an empty list if the file doesn't exist
+    # Retrieve survey data from MongoDB
+    survey_data = list(collection.find({}, {"_id": 0}))
+
+    return jsonify(survey_data)
+
 
 
 
