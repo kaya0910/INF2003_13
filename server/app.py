@@ -63,8 +63,17 @@ def save_survey_data():
 
     return jsonify({"message": "Survey data created successfully"})
 
-
-
+# Read the survey_data.json file and return the data
+@app.route("/survey_data", methods=["GET"])
+def retrieve_survey_data():
+    # Check if the survey data file exists
+    if os.path.exists("data/survey_data.json"):
+        # Read the survey data from the JSON file
+        with open("data/survey_data.json", "r") as file:
+            survey_data = json.load(file)
+        return jsonify(survey_data)
+    else:
+        return jsonify([])  # Return an empty list if the file doesn't exist
 
 
 
