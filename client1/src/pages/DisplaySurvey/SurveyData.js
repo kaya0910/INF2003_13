@@ -20,6 +20,9 @@ const SurveyDataDisplay = () => {
     1: "Strongly Disagree",
   };
 
+  if (surveyData.length === 0) {
+    return <div>No data</div>;
+  }
 
   return (
     <div>
