@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 import json
 import random
@@ -20,6 +20,9 @@ app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = ''
 app.config['MYSQL_DB'] = 'happydb'
+
+# Configure session to use filesystem
+app.config['SECRET_KEY'] = 'secret-key'
 
 # Initialize MySQL
 mysql = MySQL(app)
@@ -46,6 +49,8 @@ def login():
     # Check if the user exists
     if user:
         if check_password_hash(user[3], password):
+            session["user_id"] = user[0]
+            print(session["user_id"])
             return jsonify({"message": "Login successful"})
         else:
             return jsonify({"message": "Invalid password"}), 401
