@@ -10,14 +10,14 @@ const Register = () => {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
 
+  axios.defaults.withCredentials = true;
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     if (!username || !name || !password) {
-      Alert("Please fill up details");
-      return;
+      return alert("Plesase fill up info");
     }
 
     console.log("Username:", username);
@@ -31,15 +31,14 @@ const Register = () => {
     };
 
     axios
-      .post(BASE_URL + "/users", credentialData)
+      .post(BASE_URL + "/signup", credentialData)
       .then((res) => {
         console.log("Data updated successfully:", res.data);
+        navigate("/user/dashboard");
       })
       .catch((error) => {
         console.error("Error updating data:", error);
       });
-    alert("Data is updated succcessfully!");
-    navigate("/dashboard");
   };
 
   return (

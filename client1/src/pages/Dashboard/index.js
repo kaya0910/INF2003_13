@@ -34,6 +34,7 @@ ChartJS.register(
 );
 
 const Dashboard = () => {
+
   return (
     <div>
       <Typography.Title level={4}>Dashboard</Typography.Title>

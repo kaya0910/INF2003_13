@@ -9,6 +9,7 @@ const Login = () => {
 
   const navigate = useNavigate();
 
+  axios.defaults.withCredentials = true;
   const handleSubmit = (e) => {
     e.preventDefault();
     // Add your sign-in logic here
@@ -26,16 +27,19 @@ const Login = () => {
     };
 
     axios
-      .post(BASE_URL + "/login", credentialData)
+      .post(BASE_URL + "/signin", credentialData)
       .then((res) => {
-        console.log("Data updated successfully:", res.data);
+        if (res.data.loggedIn) {
+          console.log("Data updated successfully:", res.data);
+          navigate("/user/dashboard");
+        } else {
+          alert("Incorrect username or password");
+        }
       })
       .catch((error) => {
         console.error("Error updating data:", error);
         alert("Incorrect username or password");
       });
-
-    navigate("/dashboard");
   };
 
   return (
