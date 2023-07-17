@@ -15,9 +15,7 @@ fake = Faker()
 # Define the number of customers to generate
 num_of_user = 10
 
-# Generate random first and last names for the specified number of customers
-# first_names = [fake.first_name() for _ in range(num_of_user)]
-# last_names = [fake.last_name() for _ in range(num_of_user)]
+# Generate random username and passwords
 username = [fake.user_name() for _ in range(num_of_user)]
 password = [fake.password() for _ in range(num_of_user)]
 
@@ -34,28 +32,11 @@ with open('users.csv', 'w', newline='') as f:
         user_counter += 1
         userId += 1
 
-# Generate fake survey response
-# survey_counter = 0
-# surveyId = 1
-# with open('survey_response.csv', 'w', newline='') as f:
-#     writer = csv.writer(f)
-#     writer.writerow(headers[1])
-#     for i in range(num_of_user):
-#         questions = [random.randint(1, 5) for i in
-#                      range(10)]
-#
-#         average_rating = sum(questions) / len(questions)  # Calculate the average rating for the questions
-#
-#         row = [surveyId] + questions + [average_rating, i]
-#         writer.writerow(row)
-#         survey_counter += 1
-#         surveyId += 1
 
 # Generate fake survey response 3 surveys per user
 surveyId = 1
 survey_counter = 0
 num_of_surveys_per_user = 3  # Number of surveys per user
-
 
 with open('survey_response.csv', 'w', newline='') as f:
     writer = csv.writer(f)
