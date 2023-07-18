@@ -33,8 +33,6 @@ else:
 def get_random_integer(minimum, maximum):
     return random.randint(minimum, maximum)
 
-
-
 @app.route("/survey", methods=["POST"])
 def save_survey_data():
     survey_data = request.get_json()
@@ -45,7 +43,7 @@ def save_survey_data():
     # Check if the JSON file exists
     if os.path.exists("data/survey_data.json"):
         # Load existing survey responses from the JSON file
-        with open("data/survey_data.json", "r") as file:
+        with open("data/collected_data.json", "r") as file:
             responses = json.load(file)
     else:
         responses = []
@@ -67,7 +65,7 @@ def save_survey_data():
     responses.append(response)
 
     # Save survey data to a JSON file
-    with open("data/survey_data.json", "w") as file:
+    with open("data/collected_data.json", "w") as file:
         json.dump(responses, file, indent=4)
 
     print("Data saved successfully.")
@@ -110,9 +108,6 @@ def retrieve_survey_data():
     survey_data = list(collection.find({}, {"_id": 0}))
 
     return jsonify(survey_data)
-
-
-
 
 @app.route("/users", methods=["GET"])
 def get_users():
@@ -206,12 +201,38 @@ def get_happiness_by_gdp():
     sorted_data = sorted(happiness_data, key=lambda x: x["Economy (GDP per Capita)"])
     return jsonify(sorted_data)
 
+@app.route("/byCountry", methods=["GET"])
+def get_happiness_by_country():
+    with open("data/HS_vs_Country.json", "r") as file:
+        happiness_data = json.load(file)
+    sorted_data = sorted(happiness_data, key=lambda x: x["Country"])
+    return jsonify(sorted_data)
 
 @app.route("/byRegion", methods=["GET"])
 def get_happiness_by_region():
     with open("data/HPLvlByRegion.json", "r") as file:
         happiness_data = json.load(file)
     return jsonify(happiness_data)
+
+@app.route("/byData", methods=["GET"])
+def get_happiness_by_data():
+    with open("data/collected_data.json", "r") as file:
+        surveys = json.load(file)
+        question_counts = {}
+        for survey in surveys:
+            survey_data = survey["Survey"]
+            for question, answer in survey_data.items():
+                if question in question_counts:
+                    if answer in question_counts[question]:
+                        question_counts[question][answer] += 1
+                    else:
+                        question_counts[question][answer] = 1
+                else:
+                    question_counts[question] = {answer: 1}
+    # Convert the question counts into a JSON object
+    # question_counts_survey = json.dumps(question_counts, indent=4)
+        
+    return jsonify(question_counts)
 
 
 @app.route("/register", methods=["POST"])
@@ -229,6 +250,4 @@ def edit_survey():
 
 
 if __name__ == "__main__":
-    app.run()
-
-
+    app.run(debug=True)
