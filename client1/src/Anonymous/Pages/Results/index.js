@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Table } from "antd";
-import { getData } from "../../API";
+import { getData } from "../../../API";
 
 const Results = () => {
   return (

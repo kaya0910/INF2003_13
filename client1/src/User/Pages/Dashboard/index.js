@@ -7,7 +7,7 @@ import {
 } from "@ant-design/icons";
 
 import React, { useEffect, useState } from "react";
-import { getByGDP, getByData } from "../../API";
+import { getByGDP, getByRegion, getByData } from "../../../API";
 
 import {
   Chart as ChartJS,
@@ -21,6 +21,10 @@ import {
   LinearScale,
 } from "chart.js";
 import { Bar, Scatter } from "react-chartjs-2";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+import { BASE_URL } from "../../../constants";
 
 ChartJS.register(
   CategoryScale,
@@ -33,7 +37,20 @@ ChartJS.register(
   Legend
 );
 
-const Dashboard = () => {
+const UserDashboard = () => {
+  const [username, setUsername] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    axios.get(BASE_URL + "user/dashboard").then((res) => {
+      if (res.data.loggedIn) {
+        setUsername(res.data.username);
+      } else {
+        navigate("signup");
+      }
+    });
+  }, []);
+
   return (
     <div>
       <Typography.Title level={4}>Dashboard</Typography.Title>
@@ -69,7 +86,7 @@ const Dashboard = () => {
           />
         </Space>
         <div style={{ display: "flex" }}>
-          <DataChart />
+          <RegionChart />
           <ScatterChart />
         </div>
       </div>
@@ -97,41 +114,39 @@ const DashboardCard = ({ title, value, icon, color, backgroundColor }) => {
   );
 };
 
-const DataChart = () => {
-  const [chartData, setChartData] = useState({
+const RegionChart = () => {
+  const [reveneuData, setReveneuData] = useState({
     labels: [],
     datasets: [],
   });
 
   useEffect(() => {
-    getByData().then((data) => {
-      const labels = Object.keys(data);
-      const datasets = Object.entries(data[labels[0]]).map(([label, _]) => ({
-        label,
-        data: labels.map((l) => data[l][label]),
-        backgroundColor: getBackgroundColor(label),
-        borderColor: "black",
-        borderWidth: 1,
-      }));
-  
-      setChartData({ labels, datasets });
+    getByRegion().then((res) => {
+      const labels = [];
+      const data = [];
+
+      for (const [label, value] of Object.entries(res)) {
+        labels.push(label);
+        data.push(value);
+      }
+
+      const dataSource = {
+        labels,
+        datasets: [
+          {
+            label: "Average Happiness Level",
+            data: data,
+            backgroundColor: "rgba(255, 0, 0, 1)",
+            borderColor: "black",
+            borderWidth: 1,
+          },
+        ],
+      };
+
+      setReveneuData(dataSource);
     });
   }, []);
-  
-  const getBackgroundColor = (label) => {
-    if (label === "Agree") {
-      return "rgba(0, 255, 0, 1)";
-    } else if (label === "Neutral") {
-      return "rgba(255, 255, 0, 1)";
-    } else if (label === "Disagree") {
-      return "rgba(255, 165, 0, 1)";
-    } else if (label === "Strongly Agree") {
-      return "rgba(0, 0, 255, 1)";
-    } else if (label === "Strongly Disagree") {
-      return "rgba(255, 0, 0, 1)";
-    }
-  };
-  
+
   const options = {
     responsive: true,
     plugins: {
@@ -140,19 +155,17 @@ const DataChart = () => {
       },
       title: {
         display: true,
-        text: "Survey Counts",
+        text: "Happiness Level",
       },
     },
   };
-  
+
   return (
-    <Card style={{ width: 800, height: 500, margin: 5 }}>
-      <Bar data={chartData} options={options} />
+    <Card style={{ width: 500, height: 250, margin: 5 }}>
+      <Bar options={options} data={reveneuData} />
     </Card>
   );
-  
 };
-
 
 const ScatterChart = () => {
   const [dataSource, setDataSource] = useState({
@@ -208,4 +221,4 @@ const ScatterChart = () => {
   );
 };
 
-export default Dashboard;
+export default UserDashboard;
