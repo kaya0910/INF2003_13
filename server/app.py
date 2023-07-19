@@ -12,20 +12,36 @@ app = Flask(__name__)
 
 sess = Session()
 
-# Set up Application Configurations
-
-# MongoDB Setup
-client = MongoClient("mongodb://localhost:27017")
-db = client["happiness"]
-collection = db["happiness_survey_data"]
-
-
+# ------------------------------------------------- CORS -------------------------------------------------------------------------
 CORS(
     app,
     origins=["http://localhost:3000"],
     methods=["POST", "GET"],
     supports_credentials=True,
 )
+
+# ------------------------------------------------- MongoDB -------------------------------------------------------------------------
+
+# MongoDB Setup
+client = MongoClient("mongodb://localhost:27017")
+db = client["happydb"]
+# collection = db["happiness_survey_data"]
+
+
+# Add world_data to mongoDB (It will skip if collection already exited)
+
+collection_name = "world_data"
+collection_names_list = db.list_collection_names()
+
+
+if collection_name not in collection_names_list:
+    collection = db[collection_name]
+    with open("data/world_data.json") as f:
+        data = json.load(f)
+        collection.insert_many(data)
+else:
+    print(f"Collection '{collection_name}' already exists. Skipping data insertion.")
+
 
 # ------------------------------------------------- MySQL Setup, Session & Bcrypt-------------------------------------------------------------------------
 server_session = Session(app)
@@ -38,7 +54,7 @@ db = mysql.connector.connect(
     user="zaw", host="localhost", password="pw", database="happydb"
 )
 
-# ------------------------------------------------- Sign In & Sign Up  -------------------------------------------------------------------------
+# ------------------------------------------------- Sign In & Sign Up  -----------------------------------------------------------------------------------
 
 
 @app.route("/signup", methods=["POST"])
@@ -94,12 +110,10 @@ def login_post():
                 }
             )
         else:
-
             return jsonify(
                 {"loggedIn": False, "message": "Wrong username/password combination!"}
             )
     else:
-
         return jsonify({"loggedIn": False, "message": "User doesn't exist"})
 
 
