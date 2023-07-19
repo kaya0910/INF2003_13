@@ -35,7 +35,7 @@ bcrypt = Bcrypt(app)
 
 # MySQL Connection
 db = mysql.connector.connect(
-    user="zaw", host="localhost", password="pw", database="LoginSystem"
+    user="zaw", host="localhost", password="pw", database="happydb"
 )
 
 # ------------------------------------------------- Sign In & Sign Up  -------------------------------------------------------------------------
@@ -52,6 +52,9 @@ def register():
     existing_user = cursor.fetchone()
 
     if existing_user:
+        # Close the database connection
+        cursor.close()
+        db.close()
         return jsonify({"loggedIn": False, "error": "Username already exists"}), 400
 
     hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
@@ -61,6 +64,10 @@ def register():
         (username, hashed_password, name),
     )
     db.commit()
+
+    # Close the database connection
+    # cursor.close()
+    # db.close()
 
     return jsonify({"loggedIn": True, "message": "Registration successful"}), 200
 
@@ -87,10 +94,12 @@ def login_post():
                 }
             )
         else:
+
             return jsonify(
                 {"loggedIn": False, "message": "Wrong username/password combination!"}
             )
     else:
+
         return jsonify({"loggedIn": False, "message": "User doesn't exist"})
 
 
@@ -105,6 +114,48 @@ def user_dashboard():
         session_data = dict(session)
         print(session_data)
         return jsonify({"loggedIn": False, "session": session_data})
+
+
+# --------------------------------------------- Survey Data -------------------------------------------------------------------------------------
+
+
+@app.route("/survey", methods=["POST"])
+def create_survey_data():
+    # Parse data from the POST request
+    survey_data = request.json
+    q1 = survey_data["Q1"]
+    q2 = survey_data["Q2"]
+    q3 = survey_data["Q3"]
+    q4 = survey_data["Q4"]
+    q5 = survey_data["Q5"]
+    q6 = survey_data["Q6"]
+    q7 = survey_data["Q7"]
+    q8 = survey_data["Q8"]
+    q9 = survey_data["Q9"]
+    q10 = survey_data["Q10"]
+
+    survey_id = survey_data["survey_id"]
+    userID = survey_data["userID"]
+
+    rating = (q1 + q2 + q3 + q4 + q5 + q6 + q7 + q8 + q9 + q10) / 10
+
+    cursor = db.cursor()
+    # Execute the INSERT statement to save the survey data
+    insert_query = """
+        INSERT INTO surveys (Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9, Q10, rating, survey_id, userID)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """
+    cursor.execute(
+        insert_query,
+        (q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, rating, survey_id, userID),
+    )
+    db.commit()
+
+    # Close the database connection
+    cursor.close()
+    db.close()
+
+    return "Survey data saved successfully!", 201
 
 
 # ------------------------------------------------------ Aggregation ---------------------------------------------------------------------------------
@@ -219,13 +270,6 @@ def get_survey_data():
     with open("data/collected_data.json", "r") as file:
         survey_data = json.load(file)
     return jsonify(survey_data)
-
-
-@app.route("/survey", methods=["POST"])
-def create_survey_data():
-    survey_data = request.get_json()
-    print(survey_data)
-    return jsonify({"message": "Survey data created successfully"})
 
 
 @app.route("/survey", methods=["DELETE"])
