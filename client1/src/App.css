@@ -41,3 +41,10 @@
   justify-content: flex-start;
   align-items: flex-start;
 }
+
+/* Media query for larger screens */
+@media screen and (min-width: 768px) {
+  .box {
+    width: calc(33.33% - 20px);
+  }
+}
