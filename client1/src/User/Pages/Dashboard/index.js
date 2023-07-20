@@ -24,6 +24,9 @@ import {
 } from "chart.js";
 import { Bar, Scatter } from "react-chartjs-2";
 
+import { useContext } from "react";
+import { userContext } from "../../../Context/userContext";
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -36,21 +39,22 @@ ChartJS.register(
 );
 
 const Dashboard = () => {
-  const [username, setUsername] = useState("");
-  const [id, setId] = useState("");
-
   const navigate = useNavigate();
+
+  const { username, userID } = useContext(userContext);
 
   axios.defaults.withCredentials = true;
 
   useEffect(() => {
+    console.log(username, userID);
+  }, [username, userID]);
+
+  useEffect(() => {
     axios.get("http://127.0.0.1:5000/auth/dashboard").then((res) => {
-      console.log(res);
+      console.log("Auth check", res.data);
 
       if (res.data.loggedIn) {
-        // setId(res.data.result[0]);
-        // setUsername(res.data.result[1]);
-        console.log(res.data);
+        ///
       } else {
         navigate("/user/dashboard");
       }

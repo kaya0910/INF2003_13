@@ -5,5 +5,5 @@ flask-bcrypt
 mysql-connector-python
 Flask-Session
 python-dotenv
-redis
 Faker
+Flask-PyMongo

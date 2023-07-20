@@ -36,7 +36,6 @@ ChartJS.register(
 const Dashboard = () => {
   return (
     <div>
-      <Typography.Title level={4}>Dashboard</Typography.Title>
       <div>
         <Space direction="horizontal" style={{ paddingBottom: 10 }}>
           <DashboardCard

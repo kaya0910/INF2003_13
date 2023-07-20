@@ -3,6 +3,7 @@ from flask_cors import CORS
 import json
 import random
 from pymongo import MongoClient
+from flask_pymongo import PyMongo
 import mysql.connector
 import os
 from flask_bcrypt import Bcrypt
@@ -10,7 +11,15 @@ from flask_session import Session
 
 app = Flask(__name__)
 
-sess = Session()
+
+# Configure Flask-Session to use the filesystem for session storage
+app.config["SESSION_TYPE"] = "mongodb"
+app.config["SESSION_PERMANENT"] = False
+mongo = PyMongo(app, uri="mongodb://localhost:27017/happydb")
+app.config["SESSION_MONGODB"] = mongo.db
+
+app.secret_key = "dsdfsefsdfdsfdsfsdfdsbvgregrhethtdgdg"
+Session(app)
 
 # ------------------------------------------------- CORS -------------------------------------------------------------------------
 CORS(
@@ -44,7 +53,6 @@ else:
 
 
 # ------------------------------------------------- MySQL Setup, Session & Bcrypt-------------------------------------------------------------------------
-server_session = Session(app)
 
 # Brycrpt Password
 bcrypt = Bcrypt(app)
@@ -54,7 +62,7 @@ db = mysql.connector.connect(
     user="zaw", host="localhost", password="pw", database="happydb"
 )
 
-# ------------------------------------------------- Sign In & Sign Up  -----------------------------------------------------------------------------------
+# ------------------------------------------------- Sign In, Sign Up & Sign Out  -----------------------------------------------------------------------------------
 
 
 @app.route("/signup", methods=["POST"])
@@ -81,11 +89,27 @@ def register():
     )
     db.commit()
 
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    result = cursor.fetchone()
+
     # Close the database connection
     # cursor.close()
     # db.close()
 
-    return jsonify({"loggedIn": True, "message": "Registration successful"}), 200
+    # Create key-value session with username
+    session["username"] = username
+
+    return (
+        jsonify(
+            {
+                "loggedIn": True,
+                "message": "Registration successful",
+                "userID": result[0],
+                "user": session["username"],
+            }
+        ),
+        200,
+    )
 
 
 @app.route("/signin", methods=["POST"])
@@ -106,6 +130,7 @@ def login_post():
                 {
                     "loggedIn": True,
                     "message": "/signin",
+                    "userID": result[0],
                     "username": session["username"],
                 }
             )
@@ -117,17 +142,23 @@ def login_post():
         return jsonify({"loggedIn": False, "message": "User doesn't exist"})
 
 
+@app.route("/signout", methods=["POST"])
+def logout():
+    # Clear the session data to log out the user
+    session.clear()
+    return jsonify({"message": "Logged out successfully"})
+
+
 # --------------------------------------------- Authorization & Authentication -------------------------------------------------------------------------------------
 
 
 @app.route("/auth/dashboard", methods=["GET"])
 def user_dashboard():
     if "username" in session:
-        return jsonify({"loggedIn": True, "result": session["username"]})
+        return jsonify({"loggedIn": True, "username": session["username"]})
     else:
         session_data = dict(session)
-        print(session_data)
-        return jsonify({"loggedIn": False, "session": session_data})
+        return jsonify({"loggedIn": False, "username": session})
 
 
 # --------------------------------------------- Survey Data -------------------------------------------------------------------------------------
@@ -148,7 +179,6 @@ def create_survey_data():
     q9 = survey_data["Q9"]
     q10 = survey_data["Q10"]
 
-    survey_id = survey_data["survey_id"]
     userID = survey_data["userID"]
 
     rating = (q1 + q2 + q3 + q4 + q5 + q6 + q7 + q8 + q9 + q10) / 10
@@ -156,18 +186,18 @@ def create_survey_data():
     cursor = db.cursor()
     # Execute the INSERT statement to save the survey data
     insert_query = """
-        INSERT INTO surveys (Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9, Q10, rating, survey_id, userID)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO surveys (Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9, Q10, rating, userID)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     cursor.execute(
         insert_query,
-        (q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, rating, survey_id, userID),
+        (q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, rating, userID),
     )
     db.commit()
 
     # Close the database connection
-    cursor.close()
-    db.close()
+    # cursor.close()
+    # db.close()
 
     return "Survey data saved successfully!", 201
 
@@ -329,8 +359,5 @@ def edit_survey():
 
 
 if __name__ == "__main__":
-    app.secret_key = "super secret key"
-    app.config["SESSION_TYPE"] = "filesystem"
-    sess.init_app(app)
     app.debug = True
     app.run()

@@ -1,9 +1,10 @@
 import React from "react";
 import AppRoutes from "../AppRoutes";
+import "./PageContent.css";
 
 const PageContent = () => {
   return (
-    <div className="PageContent">
+    <div className="page-content">
       <AppRoutes />
     </div>
   );
