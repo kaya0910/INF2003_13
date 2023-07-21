@@ -11,6 +11,15 @@ from flask_session import Session
 
 app = Flask(__name__)
 
+# ------------------------------------------------- CORS -------------------------------------------------------------------------
+
+CORS(
+    app,
+    origins=["http://localhost:3000"],
+    methods=["POST", "GET", "PUT", "DELETE"],
+    supports_credentials=True,
+)
+
 
 # Configure Flask-Session to use the filesystem for session storage
 app.config["SESSION_TYPE"] = "filesystem"
@@ -18,13 +27,6 @@ app.config["SESSION_TYPE"] = "filesystem"
 app.secret_key = "dsdfsefsdfdsfdsfsdfdsbvgregrhethtdgdg"
 Session(app)
 
-# ------------------------------------------------- CORS -------------------------------------------------------------------------
-CORS(
-    app,
-    origins=["http://localhost:3000"],
-    methods=["POST", "GET"],
-    supports_credentials=True,
-)
 
 # ------------------------------------------------- MongoDB -------------------------------------------------------------------------
 
@@ -56,7 +58,7 @@ bcrypt = Bcrypt(app)
 
 # MySQL Connection
 db = mysql.connector.connect(
-    user="root", host="localhost", password="", database="happydb"
+    user="zaw", host="localhost", password="pw", database="happydb"
 )
 
 # ------------------------------------------------- Sign In, Sign Up & Sign Out  -----------------------------------------------------------------------------------
@@ -74,8 +76,8 @@ def register():
 
     if existing_user:
         # Close the database connection
-        cursor.close()
-        db.close()
+        # cursor.close()
+        # db.close()
         return jsonify({"loggedIn": False, "error": "Username already exists"}), 400
 
     hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
@@ -132,9 +134,7 @@ def login_post():
                 }
             )
         else:
-            return jsonify(
-                {"loggedIn": False, "message": "Wrong username/Password"}
-            )
+            return jsonify({"loggedIn": False, "message": "Wrong username/Password"})
     else:
         return jsonify({"loggedIn": False, "message": "User doesn't exist"})
 
@@ -231,6 +231,7 @@ def get_happiness_by_region():
     with open("data/HPLvlByRegion.json", "r") as file:
         happiness_data = json.load(file)
     return jsonify(happiness_data)
+
 
 @app.route("/byHappiness", methods=["GET"])
 def get_happiness_by_world_data():
