@@ -59,7 +59,7 @@ bcrypt = Bcrypt(app)
 
 # MySQL Connection
 db = mysql.connector.connect(
-    user="zaw", host="localhost", password="pw", database="happydb"
+    user="root", host="localhost", password="", database="happydb"
 )
 
 # ------------------------------------------------- Sign In, Sign Up & Sign Out  -----------------------------------------------------------------------------------
@@ -234,6 +234,88 @@ def get_happiness_by_region():
     with open("data/HPLvlByRegion.json", "r") as file:
         happiness_data = json.load(file)
     return jsonify(happiness_data)
+
+# Happiness score for each region
+# db.collection.aggregate([
+#   {
+#     $group: {
+#       _id: "$Region",
+#       averageHappinessScore: { $avg: "$Happiness Score" }
+#     }
+#   }
+# ])
+
+# Top 5 countries with the highest GDP (maybe can be used to compare with the top 5 countries with the highest happiness score)
+# db.collection.aggregate([
+#   {
+#     $sort: {
+#       "Economy (GDP per Capita)": -1
+#     }
+#   },
+#   {
+#     $limit: 5
+#   },
+#   {
+#     $project: {
+#       _id: 0,
+#       Country: 1,
+#       "Economy (GDP per Capita)": 1
+#     }
+#   }
+# ])
+
+# Average trust higher than 7 (also can be used to compare with happiness score maybe?)
+# db.collection.aggregate([
+#   {
+#     $match: {
+#       "Happiness Score": { $gt: 7 }
+#     }
+#   },
+#   {
+#     $group: {
+#       _id: null,
+#       averageTrust: { $avg: "$Trust (Government Corruption)" }
+#     }
+#   }
+# ])
+
+# Life expectancy highest and lowest for each region
+# db.collection.aggregate([
+#   {
+#     $sort: {
+#       "Health (Life Expectancy)": -1
+#     }
+#   },
+#   {
+#     $group: {
+#       _id: "$Region",
+#       highestHealthCountry: { $first: "$Country" },
+#       highestHealthScore: { $first: "$Health (Life Expectancy)" },
+#       lowestHealthCountry: { $last: "$Country" },
+#       lowestHealthScore: { $last: "$Health (Life Expectancy)" }
+#     }
+#   }
+# ])
+
+# Average health score for each region
+# @app.route("/aggregate/health", methods=["GET"])
+# def aggregate_health():
+#     pipeline = [
+#         {"$sort": {"Health (Life Expectancy)": -1}},
+#         {
+#             "$group": {
+#                 "_id": "$Region",
+#                 "highestHealthCountry": {"$first": "$Country"},
+#                 "highestHealthScore": {"$first": "$Health (Life Expectancy)"},
+#                 "lowestHealthCountry": {"$last": "$Country"},
+#                 "lowestHealthScore": {"$last": "$Health (Life Expectancy)"},
+#             }
+#         },
+#     ]
+#     result = list(collection.aggregate(pipeline))
+#     return jsonify(result)
+
+
 
 
 # ------------------------------------------------------ ---------------------------------------------------------------------------------
