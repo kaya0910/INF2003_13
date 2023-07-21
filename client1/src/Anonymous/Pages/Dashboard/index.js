@@ -7,7 +7,7 @@ import {
 } from "@ant-design/icons";
 
 import React, { useEffect, useState } from "react";
-import { getByGDP, getByCountry, getByData } from "../../../API";
+import { getByGDP, getByHappiness, getByData } from "../../../API";
 
 import {
   Chart as ChartJS,
@@ -34,43 +34,85 @@ ChartJS.register(
 );
 
 const Dashboard = () => {
-  const [dataSource, setDataSource] = useState({
+  const [chartData, setChartData] = useState({
     labels: [],
     datasets: [],
   });
 
-  const [minimumY, setMinimumY] = useState(null);
+  const [dataChartData, setDataChartData] = useState({
+    labels: [],
+    datasets: [],
+  });
 
   useEffect(() => {
-    getByCountry().then((countryData) => {
-      const labels = [];
-      const data = [];
+    getByHappiness().then((data) => {
+      const labels = Object.keys(data);
+      console.log(data);
+      const datasets = [
+        {
+          label: "Happiness Score",
+          data: Object.values(data),
+          backgroundColor: "rgba(255, 0, 0, 1)",
+          borderColor: "black",
+          borderWidth: 1,
+        },
+      ];
+      setChartData({ labels, datasets });
+    });      
 
-      countryData.forEach((element) => {
-        labels.push(element["Country"]);
-        data.push(element["Happiness Score"]);
-      });
-
-      const minValue = Math.min(...data, 4.5);
-      setMinimumY(minValue);
-
-      const chartData = {
-        labels: labels,
-        datasets: [
-          {
-            label: "Happiness Score for different countries",
-            data: data,
-            backgroundColor: "rgba(255, 0, 0, 1)",
-            borderColor: "black",
-            borderWidth: 1,
-          },
-        ],
-      };
-
-      setDataSource({ labels, datasets: chartData.datasets });
+    getByData().then((data) => {
+      const labels = Object.keys(data);
+      const datasets = Object.entries(data[labels[0]]).map(([label, _]) => ({
+        label,
+        data: labels.map((l) => data[l][label]),
+        backgroundColor: getBackgroundColor(label),
+        borderColor: "black",
+        borderWidth: 1,
+      }));
+      setDataChartData({ labels, datasets });
     });
   }, []);
-  
+
+  const getBackgroundColor = (label) => {
+    if (label === "Agree") {
+      return "rgba(0, 255, 0, 1)";
+    } else if (label === "Neutral") {
+      return "rgba(255, 255, 0, 1)";
+    } else if (label === "Disagree") {
+      return "rgba(255, 165, 0, 1)";
+    } else if (label === "Strongly Agree") {
+      return "rgba(0, 0, 255, 1)";
+    } else if (label === "Strongly Disagree") {
+      return "rgba(255, 0, 0, 1)";
+    }
+  };
+
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "bottom",
+      },
+      title: {
+        display: true,
+        text: "Happiness Scores by Region",
+      },
+    },
+  };
+
+  const dataChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "bottom",
+      },
+      title: {
+        display: true,
+        text: "Question Counts",
+      },
+    },
+  };
+
   return (
     <div>
       <Typography.Title level={4}>Dashboard</Typography.Title>
@@ -92,34 +134,38 @@ const Dashboard = () => {
           />
           <DashboardCard
             title={"Questions"}
-            value={123}
+            value={chartData.labels.length}
             icon={<QuestionCircleOutlined />}
             color="red"
             backgroundColor="rgba(255,0,0,0.25)"
           />
           <DashboardCard
-            title={"Happiest Country"}
+            title={"Happiest Region"}
             icon={<FlagOutlined />}
             color="purple"
             backgroundColor="rgba(0,255,255,0.25)"
-            data={dataSource}
+            value={chartData}
           />
         </Space>
         <div style={{ display: "flex" }}>
-  <div style={{ marginRight: "10px" }}>
-    <DataChart />
-  </div>
-  <div style={{ display: "flex", flexDirection: "column" }}>
-    <ScatterChart />
-    <BarChart data={dataSource} />
-  </div>
-</div>
+            <Card style={{ width: 700, height: 350, margin: 5 }}>
+              <Bar options={options} data={dataChartData} />
+            </Card>
+            <ScatterChart />
+          </div>
+        <div style={{ display: "flex" }}>
+          <div style={{ marginRight: "10px" }}>
+          <Card style={{ width: 700, height: 350, margin: 5 }}>
+              <Bar data={chartData} options={options} />
+            </Card>
+          </div>
         </div>
       </div>
+    </div>
   );
 };
 
-const DashboardCard = ({ title, value, icon, color, backgroundColor, data }) => {
+const DashboardCard = ({ title, icon, color, backgroundColor, value }) => {
   const iconStyle = {
     fontSize: 40,
     color: color,
@@ -129,12 +175,12 @@ const DashboardCard = ({ title, value, icon, color, backgroundColor, data }) => 
   };
 
   const getHighestHappinessScore = () => {
-    if (data && data.datasets && data.datasets.length > 0) {
-      const dataset = data.datasets[0];
+    if (value && value.datasets && value.datasets.length > 0) {
+      const dataset = value.datasets[0];
       const maxHappinessScore = Math.max(...dataset.data);
       const index = dataset.data.indexOf(maxHappinessScore);
-      if (index !== -1 && data.labels && data.labels.length > index) {
-        return data.labels[index];
+      if (index !== -1 && value.labels && value.labels.length > index) {
+        return value.labels[index];
       }
     }
     return null;
@@ -264,40 +310,25 @@ const ScatterChart = () => {
 };
 
 const BarChart = () => {
-  const [dataSource, setDataSource] = useState({
+  const [chartData, setChartData] = useState({
     labels: [],
     datasets: [],
   });
 
-  const [minimumY, setMinimumY] = useState(null);
-
   useEffect(() => {
-    getByCountry().then((res) => {
-      const labels = [];
-      const data = [];
+    getByHappiness().then((data) => {
+      const labels = Object.keys(data);
+      const datasets = [
+        {
+          label: "Happiness Score",
+          data: Object.values(data),
+          backgroundColor: "rgba(255, 0, 0, 1)",
+          borderColor: "black",
+          borderWidth: 1,
+        },
+      ];
 
-      res.forEach((element) => {
-        labels.push(element["Country"]);
-        data.push(element["Happiness Score"]);
-      });
-
-      const minValue = Math.min(...data, 4.5);
-      setMinimumY(minValue);
-
-      const chartData = {
-        labels: labels,
-        datasets: [
-          {
-            label: "Happiness Score for different countries",
-            data: data,
-            backgroundColor: "rgba(255, 0, 0, 1)",
-            borderColor: "black",
-            borderWidth: 1,
-          },
-        ],
-      };
-
-      setDataSource(chartData);
+      setChartData({ labels, datasets });
     });
   }, []);
 
@@ -305,27 +336,23 @@ const BarChart = () => {
     responsive: true,
     plugins: {
       legend: {
-        display: false,
+        position: "bottom",
       },
       title: {
         display: true,
-        text: "Happiness Score for different countries",
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        min: minimumY,
+        text: "Happiness Scores by Region",
       },
     },
   };
 
   return (
-    <Card style={{ width: 800, height: 500, margin: 5 }}>
-      <Bar options={options} data={dataSource} />
-    </Card>
+    <div>
+      <h2>Happiness Scores by Region</h2>
+      <div style={{ width: 500, height: 250, margin: 5 }}>
+        <Bar data={chartData} options={options} />
+      </div>
+    </div>
   );
 };
-
 
 export default Dashboard;

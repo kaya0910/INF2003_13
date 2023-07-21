@@ -15,8 +15,8 @@ export const getByGDP = async () => {
   return await res.json();
 };
 
-export const getByCountry = async () => {
-  const res = await fetch(BASE_URL + "/byCountry");
+export const getByHappiness = async () => {
+  const res = await fetch(BASE_URL + "/byHappiness");
   return await res.json();
 };
 

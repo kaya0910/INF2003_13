@@ -1,0 +1,12 @@
+/* src/components/PageContent.css */
+.page-content {
+  padding: 20px; /* Add padding to the content area */
+}
+
+/* Add responsive styles for different screen sizes */
+@media (max-width: 768px) {
+  .page-content {
+    padding: 10px; /* Reduce padding for smaller screens */
+  }
+}
+
