@@ -1,117 +1,304 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 import json
 import random
-import pymongo
-from pymongo import MongoClient, InsertOne, DeleteOne, ReplaceOne  #insertMany
-from pymongo.errors import BulkWriteError
-from bson.objectid import ObjectId
-
+from pymongo import MongoClient
+from flask_pymongo import PyMongo
+import mysql.connector
 import os
-client = MongoClient("mongodb://localhost:27017")
-db = client["happiness"]
-collection = db["survey_data"]
-requesting = []
+from flask_bcrypt import Bcrypt
+from flask_session import Session
 
 app = Flask(__name__)
-CORS(app)
 
-# check if mongodb database exists
-dblist = client.list_database_names()
-if "happiness" in dblist:
-  print("The database exists.")
-else:
-    print("The database does not exist.")
 
-collectionlist = db.list_collection_names()
-if "survey_data" in collectionlist:
-  print("The collection exists.")
+# Configure Flask-Session to use the filesystem for session storage
+app.config["SESSION_TYPE"] = "mongodb"
+app.config["SESSION_PERMANENT"] = False
+mongo = PyMongo(app, uri="mongodb://localhost:27017/happydb")
+app.config["SESSION_MONGODB"] = mongo.db
+
+app.secret_key = "dsdfsefsdfdsfdsfsdfdsbvgregrhethtdgdg"
+Session(app)
+
+# ------------------------------------------------- CORS -------------------------------------------------------------------------
+CORS(
+    app,
+    origins=["http://localhost:3000"],
+    methods=["POST", "GET"],
+    supports_credentials=True,
+)
+
+# ------------------------------------------------- MongoDB -------------------------------------------------------------------------
+
+# MongoDB Setup
+client = MongoClient("mongodb://localhost:27017")
+db = client["happydb"]
+# collection = db["happiness_survey_data"]
+
+
+# Add world_data to mongoDB (It will skip if collection already exited)
+
+collection_name = "world_data"
+collection_names_list = db.list_collection_names()
+
+
+if collection_name not in collection_names_list:
+    collection = db[collection_name]
+    with open("data/world_data.json") as f:
+        data = json.load(f)
+        collection.insert_many(data)
 else:
-    print("The collection does not exist.")
+    print(f"Collection '{collection_name}' already exists. Skipping data insertion.")
+
+
+# ------------------------------------------------- MySQL Setup, Session & Bcrypt-------------------------------------------------------------------------
+
+# Brycrpt Password
+bcrypt = Bcrypt(app)
+
+# MySQL Connection
+db = mysql.connector.connect(
+    user="root", host="localhost", password="", database="happydb"
+)
+
+# ------------------------------------------------- Sign In, Sign Up & Sign Out  -----------------------------------------------------------------------------------
+
+
+@app.route("/signup", methods=["POST"])
+def register():
+    username = request.json["username"]
+    password = request.json["password"]
+    name = request.json["name"]
+
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    existing_user = cursor.fetchone()
+
+    if existing_user:
+        # Close the database connection
+        cursor.close()
+        db.close()
+        return jsonify({"loggedIn": False, "error": "Username already exists"}), 400
+
+    hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+
+    cursor.execute(
+        "INSERT INTO users (username, password, name) VALUES (%s, %s, %s)",
+        (username, hashed_password, name),
+    )
+    db.commit()
+
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    result = cursor.fetchone()
+
+    # Close the database connection
+    # cursor.close()
+    # db.close()
+
+    # Create key-value session with username
+    session["username"] = username
+
+    return (
+        jsonify(
+            {
+                "loggedIn": True,
+                "message": "Registration successful",
+                "userID": result[0],
+                "user": session["username"],
+            }
+        ),
+        200,
+    )
+
+
+@app.route("/signin", methods=["POST"])
+def login_post():
+    username = request.json["username"]
+    password = request.json["password"]
+
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    result = cursor.fetchone()
+
+    if result:
+        if bcrypt.check_password_hash(result[2], password):
+            # Create key-value session with username
+            session["username"] = username
+
+            return jsonify(
+                {
+                    "loggedIn": True,
+                    "message": "/signin",
+                    "userID": result[0],
+                    "username": session["username"],
+                }
+            )
+        else:
+            return jsonify(
+                {"loggedIn": False, "message": "Wrong username/password combination!"}
+            )
+    else:
+        return jsonify({"loggedIn": False, "message": "User doesn't exist"})
+
+
+@app.route("/signout", methods=["POST"])
+def logout():
+    # Clear the session data to log out the user
+    session.clear()
+    return jsonify({"message": "Logged out successfully"})
+
+
+# --------------------------------------------- Authorization & Authentication -------------------------------------------------------------------------------------
+
+
+@app.route("/auth/dashboard", methods=["GET"])
+def user_dashboard():
+    if "username" in session:
+        return jsonify({"loggedIn": True, "username": session["username"]})
+    else:
+        session_data = dict(session)
+        return jsonify({"loggedIn": False, "username": session})
+
+
+# --------------------------------------------- Survey Data -------------------------------------------------------------------------------------
+
+
+@app.route("/survey", methods=["POST"])
+def create_survey_data():
+    # Parse data from the POST request
+    survey_data = request.json
+    q1 = survey_data["Q1"]
+    q2 = survey_data["Q2"]
+    q3 = survey_data["Q3"]
+    q4 = survey_data["Q4"]
+    q5 = survey_data["Q5"]
+    q6 = survey_data["Q6"]
+    q7 = survey_data["Q7"]
+    q8 = survey_data["Q8"]
+    q9 = survey_data["Q9"]
+    q10 = survey_data["Q10"]
+
+    userID = survey_data["userID"]
+
+    rating = (q1 + q2 + q3 + q4 + q5 + q6 + q7 + q8 + q9 + q10) / 10
+
+    cursor = db.cursor()
+    # Execute the INSERT statement to save the survey data
+    insert_query = """
+        INSERT INTO surveys (Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9, Q10, rating, userID)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """
+    cursor.execute(
+        insert_query,
+        (q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, rating, userID),
+    )
+    db.commit()
+
+    # Close the database connection
+    # cursor.close()
+    # db.close()
+
+    return "Survey data saved successfully!", 201
+
+
+# ------------------------------------------------------ Aggregation ---------------------------------------------------------------------------------
+@app.route("/byData", methods=["GET"])
+def get_happiness_by_data():
+    with open("data/collected_data.json", "r") as file:
+        surveys = json.load(file)
+        question_counts = {}
+        for survey in surveys:
+            survey_data = survey["Survey"]
+            for question, answer in survey_data.items():
+                if question in question_counts:
+                    if answer in question_counts[question]:
+                        question_counts[question][answer] += 1
+                    else:
+                        question_counts[question][answer] = 1
+                else:
+                    question_counts[question] = {answer: 1}
+    return jsonify(question_counts)
+
+@app.route("/byHappiness", methods=["GET"])
+def get_happiness_by_world_data():
+    with open("data/world_data.json", "r") as file:
+        surveys = json.load(file)
+        region_scores = {}
+        region_counts = {}
+        for survey in surveys:
+            region = survey["Region"]
+            happiness_score = survey["Happiness Score"]
+            if region in region_scores:
+                region_scores[region] += happiness_score
+                region_counts[region] += 1
+            else:
+                region_scores[region] = happiness_score
+                region_counts[region] = 1
+        region_average_scores = {}
+        for region, score in region_scores.items():
+            count = region_counts[region]
+            average_score = score / count
+            region_average_scores[region] = average_score
+    return jsonify(region_average_scores)
+
+@app.route("/byGDP", methods=["GET"])
+def get_happiness_by_gdp():
+    with open("data/HS_vs_GDP.json", "r") as file:
+        happiness_data = json.load(file)
+    sorted_data = sorted(happiness_data, key=lambda x: x["Economy (GDP per Capita)"])
+    return jsonify(sorted_data)
+
+
+@app.route("/byRegion", methods=["GET"])
+def get_happiness_by_region():
+    with open("data/HPLvlByRegion.json", "r") as file:
+        happiness_data = json.load(file)
+    return jsonify(happiness_data)
+
+
+# ------------------------------------------------------ ---------------------------------------------------------------------------------
 
 
 def get_random_integer(minimum, maximum):
     return random.randint(minimum, maximum)
 
 
+# save one response per json file to the database
+# @app.route("/survey", methods=["POST"])
+# def save_survey_data():
+#     survey_data = request.get_json()
+#
+#     # Save survey data to a JSON file
+#     with open("data/survey_data.json", "w") as file:
+#         json.dump(survey_data, file)
+#
+#     return jsonify({"message": "Survey data created successfully"})
 
+
+# save multiple responses per json file to the database
+# how to use: open mongoDBcompass, connection: mongodb://localhost:27017
 @app.route("/survey", methods=["POST"])
 def save_survey_data():
     survey_data = request.get_json()
 
-    # Save survey data to MongoDB
-    save_to_mongoDB(survey_data)
+    # Create a list to store the survey responses
+    responses = []
 
     # Check if the JSON file exists
     if os.path.exists("data/survey_data.json"):
         # Load existing survey responses from the JSON file
         with open("data/survey_data.json", "r") as file:
             responses = json.load(file)
-    else:
-        responses = []
-
-    # Generate the ID for the new survey response
-    if responses:
-        last_id = responses[-1]["id"]
-        survey_id = last_id + 1
-    else:
-        survey_id = 1
-
-    # Create the survey response dictionary
-    response = {
-        "id": survey_id,
-        "Survey": survey_data["Survey"]
-    }
 
     # Append the new survey response to the list
-    responses.append(response)
+    responses.append(survey_data)
 
     # Save survey data to a JSON file
     with open("data/survey_data.json", "w") as file:
         json.dump(responses, file, indent=4)
 
-    print("Data saved successfully.")
-
     return jsonify({"message": "Survey data created successfully"})
-
-
-def save_to_mongoDB(survey_data):
-    # Generate the ID for the new survey response in MongoDB
-    last_id = collection.count_documents({})
-    survey_id = last_id + 1
-
-    # Create the survey response document
-    response = {
-        "_id": survey_id,
-        "Survey": survey_data["Survey"]
-    }
-
-    # Insert the document into the MongoDB collection
-    try:
-        result = collection.insert_one(response)
-        print("Data saved to MongoDB successfully.")
-    except Exception as e:
-        print("Error saving data to MongoDB:", str(e))
-
-
-
-
-# Read the survey_data.json file and return the data
-# @app.route("/survey_data", methods=["GET"])
-# def retrieve_survey_data():
-#     # Retrieve survey data from MongoDB
-#     survey_data = list(collection.find({}, {"_id": 1, "id": 1, "Survey": 1}))
-#
-#     return jsonify(survey_data)
-
-@app.route("/survey_data", methods=["GET"])
-def retrieve_survey_data():
-    # Retrieve survey data from MongoDB
-    survey_data = list(collection.find({}, {"_id": 0}))
-
-    return jsonify(survey_data)
-
-
 
 
 @app.route("/users", methods=["GET"])
@@ -143,25 +330,11 @@ def delete_user(id):
     return jsonify({"message": "User deleted successfully"})
 
 
-@app.route("/login", methods=["POST"])
-def login():
-    user = request.get_json()
-    print(user)
-    return jsonify({"message": "Login successful"})
-
-
 @app.route("/survey", methods=["GET"])
 def get_survey_data():
     with open("data/collected_data.json", "r") as file:
         survey_data = json.load(file)
     return jsonify(survey_data)
-
-
-@app.route("/survey", methods=["POST"])
-def create_survey_data():
-    survey_data = request.get_json()
-    print(survey_data)
-    return jsonify({"message": "Survey data created successfully"})
 
 
 @app.route("/survey", methods=["DELETE"])
@@ -199,28 +372,6 @@ def update_survey_question(id):
     return jsonify({"message": "Question updated successfully"})
 
 
-@app.route("/byGDP", methods=["GET"])
-def get_happiness_by_gdp():
-    with open("data/HS_vs_GDP.json", "r") as file:
-        happiness_data = json.load(file)
-    sorted_data = sorted(happiness_data, key=lambda x: x["Economy (GDP per Capita)"])
-    return jsonify(sorted_data)
-
-
-@app.route("/byRegion", methods=["GET"])
-def get_happiness_by_region():
-    with open("data/HPLvlByRegion.json", "r") as file:
-        happiness_data = json.load(file)
-    return jsonify(happiness_data)
-
-
-@app.route("/register", methods=["POST"])
-def register():
-    data = request.get_json()
-    print(data)
-    return jsonify({"message": "Registration successful"})
-
-
 @app.route("/editsurvey", methods=["POST"])
 def edit_survey():
     data = request.get_json()
@@ -229,6 +380,5 @@ def edit_survey():
 
 
 if __name__ == "__main__":
+    app.debug = True
     app.run()
-
-
