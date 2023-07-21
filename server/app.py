@@ -13,10 +13,8 @@ app = Flask(__name__)
 
 
 # Configure Flask-Session to use the filesystem for session storage
-app.config["SESSION_TYPE"] = "mongodb"
-app.config["SESSION_PERMANENT"] = False
-mongo = PyMongo(app, uri="mongodb://localhost:27017/happydb")
-app.config["SESSION_MONGODB"] = mongo.db
+app.config["SESSION_TYPE"] = "filesystem"
+
 
 app.secret_key = "dsdfsefsdfdsfdsfsdfdsbvgregrhethtdgdg"
 Session(app)
@@ -136,7 +134,7 @@ def login_post():
             )
         else:
             return jsonify(
-                {"loggedIn": False, "message": "Wrong username/password combination!"}
+                {"loggedIn": False, "message": "Wrong username/Password"}
             )
     else:
         return jsonify({"loggedIn": False, "message": "User doesn't exist"})
@@ -220,6 +218,21 @@ def get_happiness_by_data():
                     question_counts[question] = {answer: 1}
     return jsonify(question_counts)
 
+
+@app.route("/byGDP", methods=["GET"])
+def get_happiness_by_gdp():
+    with open("data/HS_vs_GDP.json", "r") as file:
+        happiness_data = json.load(file)
+    sorted_data = sorted(happiness_data, key=lambda x: x["Economy (GDP per Capita)"])
+    return jsonify(sorted_data)
+
+
+@app.route("/byRegion", methods=["GET"])
+def get_happiness_by_region():
+    with open("data/HPLvlByRegion.json", "r") as file:
+        happiness_data = json.load(file)
+    return jsonify(happiness_data)
+
 @app.route("/byHappiness", methods=["GET"])
 def get_happiness_by_world_data():
     with open("data/world_data.json", "r") as file:
@@ -241,20 +254,6 @@ def get_happiness_by_world_data():
             average_score = score / count
             region_average_scores[region] = average_score
     return jsonify(region_average_scores)
-
-@app.route("/byGDP", methods=["GET"])
-def get_happiness_by_gdp():
-    with open("data/HS_vs_GDP.json", "r") as file:
-        happiness_data = json.load(file)
-    sorted_data = sorted(happiness_data, key=lambda x: x["Economy (GDP per Capita)"])
-    return jsonify(sorted_data)
-
-
-@app.route("/byRegion", methods=["GET"])
-def get_happiness_by_region():
-    with open("data/HPLvlByRegion.json", "r") as file:
-        happiness_data = json.load(file)
-    return jsonify(happiness_data)
 
 
 # ------------------------------------------------------ ---------------------------------------------------------------------------------
