@@ -1,6 +1,5 @@
 [
     {
-        "id": 1,
         "Survey": {
             "I feel particularly pleased with the way I am": "Strongly Agree",
             "I feel particularly healthy": "Strongly Agree",
@@ -12,36 +11,6 @@
             "I find beauty in some things": "Strongly Agree",
             "I have a positive impact on others around me": "Strongly Agree",
             "I am well satisfied about everything in my life": "Strongly Agree"
-        }
-    },
-    {
-        "id": 2,
-        "Survey": {
-            "I am well satisfied about everything in my life": "Strongly Agree",
-            "I have a positive impact on others around me": "Agree",
-            "I find beauty in some things": "Agree",
-            "I wake up feeling well rested": "Agree",
-            "I have happy memories of the past": "Agree",
-            "I have a particular sense of meaning and purpose in life": "Agree",
-            "I am optimistic about the future": "Agree",
-            "I feel life is very rewarding": "Agree",
-            "I feel particularly healthy": "Agree",
-            "I feel particularly pleased with the way I am": "Agree"
-        }
-    },
-    {
-        "id": 3,
-        "Survey": {
-            "I feel particularly pleased with the way I am": "Strongly Agree",
-            "I feel particularly healthy": "Agree",
-            "I feel life is very rewarding": "Agree",
-            "I am optimistic about the future": "Agree",
-            "I have a particular sense of meaning and purpose in life": "Agree",
-            "I have happy memories of the past": "Agree",
-            "I wake up feeling well rested": "Agree",
-            "I find beauty in some things": "Agree",
-            "I have a positive impact on others around me": "Agree",
-            "I am well satisfied about everything in my life": "Agree"
         }
     }
 ]
