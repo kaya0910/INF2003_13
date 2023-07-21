@@ -5,6 +5,7 @@ import {
   QuestionCircleOutlined,
   FlagOutlined,
 } from "@ant-design/icons";
+import { useLocation } from "react-router-dom";
 
 import React, { useEffect, useState } from "react";
 import { getByGDP, getByRegion } from "../../API";
@@ -34,6 +35,14 @@ ChartJS.register(
 );
 
 const Dashboard = () => {
+  const location = useLocation();
+  const userData = location.state?.userData;
+
+  useEffect(() => {
+    console.log("user dashbard");
+    console.log("userData:", userData);
+  }, []);
+
   return (
     <div>
       <Typography.Title level={4}>Dashboard</Typography.Title>

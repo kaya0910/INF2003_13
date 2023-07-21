@@ -14,3 +14,13 @@ export const getByGDP = async () => {
   const res = await fetch(BASE_URL + "/byGDP");
   return await res.json();
 };
+
+export const getByHappiness = async () => {
+  const res = await fetch(BASE_URL + "/byHappiness");
+  return await res.json();
+};
+
+export const getByData = async () => {
+  const res = await fetch(BASE_URL + "/byData");
+  return await res.json();
+};

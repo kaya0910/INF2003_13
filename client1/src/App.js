@@ -1,38 +1,54 @@
 import "./App.css";
 import { Routes, Route } from "react-router-dom";
-import Home from "./pages/Home";
+
+import UserHome from "./User/Pages/Home";
+import UserDashboard from "./User/Pages/Dashboard";
+import UserSurvey from "./User/Pages/Survey";
+import UserResults from "./User/Pages/Results";
+import UserEditSurvey from "./User/Pages/SurveyQns/EditSurvey";
+import UserCreateSurveyQn from "./User/Pages/SurveyQns/CreateQn";
+import UserUpdateSurveyQn from "./User/Pages/SurveyQns/UpdateQn";
 import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import SurveyQns from "./pages/Survey";
-import Results from "./pages/Results";
 import Login from "./pages/Login";
-import Admin from "./pages/AdminPanel";
-import EditUser from "./pages/EditUser";
-import EditSurvey from "./pages/EditSurvey";
-import UpdateSurvey from "./pages/UpateSurvey";
-import CreateSurvey from "./pages/CreateSurvey";
-import SurveyData from "./pages/DisplaySurvey/SurveyData";
+
+import Home from "./Anonymous/Pages/Home";
+import Dashboard from "./Anonymous/Pages/Dashboard";
+import Results from "./Anonymous/Pages/Results";
+import Survey from "./Anonymous/Pages/Survey";
+
+import { userContext } from "./Context/userContext";
+import { useState } from "react";
 
 const App = () => {
-  return (
-    <Routes>
-      <Route path="/" element={<Home />}>
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="survey" element={<SurveyQns />} />
-        <Route path="survey_data" element={<SurveyData />} /> {/* Removed unnecessary slashes */}
-        <Route path="results" element={<Results />} />
-        <Route path="editsurvey" element={<EditSurvey />} />
-      </Route>
-      <Route path="signup" element={<Register />} /> {/* Removed unnecessary slashes */}
-      <Route path="login" element={<Login />} /> {/* Removed unnecessary slashes */}
-      <Route path="admin" element={<Admin />} />
+  const [username, setUsername] = useState("");
+  const [userID, setUserID] = useState(0);
 
-      <Route path="update/:id" element={<EditUser />} /> {/* Removed unnecessary slashes */}
-      <Route path="updatesurvey/:id" element={<UpdateSurvey />} /> {/* Removed unnecessary slashes */}
-      <Route path="createsurvey" element={<CreateSurvey />} /> {/* Removed unnecessary slashes */}
-    </Routes>
+  return (
+    <userContext.Provider value={{ username, setUsername, userID, setUserID }}>
+      <Routes>
+        <Route path="/" element={<Home />}>
+          <Route path="dashboard" element={<Dashboard />}></Route>
+          <Route path="survey" element={<Survey />}></Route>
+          <Route path="results" element={<Results />}></Route>
+        </Route>
+
+        <Route path="/signup" element={<Register />} />
+        <Route path="/signin" element={<Login />} />
+
+        <Route path="/user" element={<UserHome />}>
+          <Route path="dashboard" element={<UserDashboard />} />
+          <Route path="survey" element={<UserSurvey />} />
+          <Route path="results" element={<UserResults />} />
+          <Route path="editsurvey" element={<UserEditSurvey />} />
+          <Route path="editsurvey/create" element={<UserCreateSurveyQn />} />
+          <Route
+            path="editsurvey/update/:id"
+            element={<UserUpdateSurveyQn />}
+          />
+        </Route>
+      </Routes>
+    </userContext.Provider>
   );
 };
-
 
 export default App;

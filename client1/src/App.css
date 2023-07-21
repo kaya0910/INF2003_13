@@ -25,14 +25,9 @@
   border-top: 1px solid rgba(0, 0, 0, 0.15);
 }
 
-/* .SideMenu {
-} */
 
-.PageContent {
-  padding-right: 20px;
-  padding-left: 12px;
-  display: flex;
-}
+
+/* Add more media queries and styles as needed for other screen sizes */
 
 .SideMenuAndPageContent {
   display: flex;
@@ -40,4 +35,11 @@
   flex: 1;
   justify-content: flex-start;
   align-items: flex-start;
+}
+
+/* Media query for larger screens */
+@media screen and (min-width: 768px) {
+  .box {
+    width: calc(33.33% - 20px);
+  }
 }
