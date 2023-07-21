@@ -15,7 +15,6 @@ app = Flask(__name__)
 # Configure Flask-Session to use the filesystem for session storage
 app.config["SESSION_TYPE"] = "filesystem"
 
-
 app.secret_key = "dsdfsefsdfdsfdsfsdfdsbvgregrhethtdgdg"
 Session(app)
 
