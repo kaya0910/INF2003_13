@@ -32,23 +32,79 @@ Session(app)
 
 # MongoDB Setup
 client = MongoClient("mongodb://localhost:27017")
-db = client["happydb"]
+mongodb = client["happydb"]
 # collection = db["happiness_survey_data"]
 
 
 # Add world_data to mongoDB (It will skip if collection already exited)
-
 collection_name = "world_data"
-collection_names_list = db.list_collection_names()
-
+collection_names_list = mongodb.list_collection_names()
 
 if collection_name not in collection_names_list:
-    collection = db[collection_name]
+    collection = mongodb[collection_name]
     with open("data/world_data.json") as f:
         data = json.load(f)
         collection.insert_many(data)
 else:
     print(f"Collection '{collection_name}' already exists. Skipping data insertion.")
+
+
+# Check if 'surveys' collection already exists
+collections = mongodb.list_collection_names()
+if "surveys" in collections:
+    print("Collection 'surveys' already exists. Skipping collection creation.")
+else:
+    # Create the 'surveys' collection with a validation schema
+    mongodb.create_collection(
+        "surveys",
+        validator={
+            "$jsonSchema": {
+                "bsonType": "object",
+                "required": [
+                    "q1",
+                    "q2",
+                    "q3",
+                    "q4",
+                    "q5",
+                    "q6",
+                    "q7",
+                    "q8",
+                    "q9",
+                    "q10",
+                    "rating",
+                ],
+                "properties": {
+                    "q1": {"bsonType": "int", "minimum": 1, "maximum": 5},
+                    "q2": {"bsonType": "int", "minimum": 1, "maximum": 5},
+                    "q3": {"bsonType": "int", "minimum": 1, "maximum": 5},
+                    "q4": {"bsonType": "int", "minimum": 1, "maximum": 5},
+                    "q5": {"bsonType": "int", "minimum": 1, "maximum": 5},
+                    "q6": {"bsonType": "int", "minimum": 1, "maximum": 5},
+                    "q7": {"bsonType": "int", "minimum": 1, "maximum": 5},
+                    "q8": {"bsonType": "int", "minimum": 1, "maximum": 5},
+                    "q9": {"bsonType": "int", "minimum": 1, "maximum": 5},
+                    "q10": {"bsonType": "int", "minimum": 1, "maximum": 5},
+                    "rating": {"bsonType": "double", "minimum": 1, "maximum": 5},
+                },
+            }
+        },
+    )
+
+
+# Create a data model for the survey
+class SurveyData:
+    def __init__(self, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, rating):
+        self.q1 = q1
+        self.q2 = q2
+        self.q3 = q3
+        self.q4 = q4
+        self.q5 = q5
+        self.q6 = q6
+        self.q7 = q7
+        self.q8 = q8
+        self.q9 = q9
+        self.q10 = q10
+        self.rating = rating
 
 
 # ------------------------------------------------- MySQL Setup, Session & Bcrypt-------------------------------------------------------------------------
@@ -158,7 +214,35 @@ def user_dashboard():
         return jsonify({"loggedIn": False, "username": session})
 
 
-# --------------------------------------------- Survey Data -------------------------------------------------------------------------------------
+# --------------------------------------------- Anonymous Survey Data (MongoDB) -------------------------------------------------------------------------------------
+@app.route("/anonymous/survey", methods=["POST"])
+def create_anonymous_survey_data():
+    # Parse data from the POST request
+    survey_data = request.json
+    q1 = survey_data["Q1"]
+    q2 = survey_data["Q2"]
+    q3 = survey_data["Q3"]
+    q4 = survey_data["Q4"]
+    q5 = survey_data["Q5"]
+    q6 = survey_data["Q6"]
+    q7 = survey_data["Q7"]
+    q8 = survey_data["Q8"]
+    q9 = survey_data["Q9"]
+    q10 = survey_data["Q10"]
+
+    # Calculate the rating
+    rating = (q1 + q2 + q3 + q4 + q5 + q6 + q7 + q8 + q9 + q10) / 10
+
+    # Create a SurveyData instance with the rating
+    survey = SurveyData(q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, rating)
+
+    # Save the survey data into the MongoDB collection
+    mongodb.surveys.insert_one(survey.__dict__)
+
+    return "Survey data with rating added to MongoDB successfully!"
+
+
+# --------------------------------------------- User Survey Data (MySQL) -------------------------------------------------------------------------------------
 
 
 @app.route("/survey", methods=["POST"])
@@ -199,7 +283,7 @@ def create_survey_data():
     return "Survey data saved successfully!", 201
 
 
-# ------------------------------------------------------ Aggregation ---------------------------------------------------------------------------------
+# ------------------------------------------------------ Aggregation - World Data ---------------------------------------------------------------------------------
 @app.route("/byData", methods=["GET"])
 def get_happiness_by_data():
     with open("data/collected_data.json", "r") as file:
@@ -256,48 +340,111 @@ def get_happiness_by_world_data():
     return jsonify(region_average_scores)
 
 
+# Top economies
+@app.route("/aggregate/top_economies", methods=["GET"])
+def get_top_economies():
+    pipeline = [
+        {"$sort": {"Economy (GDP per Capita)": -1}},
+        {"$limit": 5},
+        {"$project": {"_id": 0, "Country": 1, "Economy (GDP per Capita)": 1}},
+    ]
+
+    # Execute the aggregation query
+    result = list(mongodb["world_data"].aggregate(pipeline))
+
+    # Return the data as a JSON response
+    return jsonify(result)
+
+
+# Happiness score for each region
+@app.route("/aggregate/average_happiness_by_region", methods=["GET"])
+def get_average_happiness_by_region():
+    # MongoDB aggregation pipeline
+    pipeline = [
+        {
+            "$group": {
+                "_id": "$Region",
+                "averageHappinessScore": {"$avg": "$Happiness Score"},
+            }
+        }
+    ]
+
+    # Execute the aggregation query
+    result = list(mongodb["world_data"].aggregate(pipeline))
+
+    # Return the data as a JSON response
+    return jsonify(result)
+
+
+# Average trust higher than 7 (also can be used to compare with happiness score maybe?)
+@app.route("/aggregate/average_trust", methods=["GET"])
+def get_average_trust():
+    pipeline = [
+        {"$match": {"Happiness Score": {"$gt": 7}}},
+        {
+            "$group": {
+                "_id": None,
+                "averageTrust": {"$avg": "$Trust (Government Corruption)"},
+            }
+        },
+    ]
+
+    # Execute the aggregation query
+    result = list(mongodb["world_data"].aggregate(pipeline))
+
+    # Return the data as a JSON response
+    return jsonify(result)
+
+
+# Life Expectancy highest and lowest for each region
+@app.route("/aggregate/highest_lowest_region", methods=["GET"])
+def get_health_data():
+    # MongoDB aggregation pipeline
+    pipeline = [
+        {"$sort": {"Health (Life Expectancy)": -1}},
+        {
+            "$group": {
+                "_id": "$Region",
+                "highestHealthCountry": {"$first": "$Country"},
+                "highestHealthScore": {"$first": "$Health (Life Expectancy)"},
+                "lowestHealthCountry": {"$last": "$Country"},
+                "lowestHealthScore": {"$last": "$Health (Life Expectancy)"},
+            }
+        },
+    ]
+
+    # Execute the aggregation query
+    result = list(mongodb["world_data"].aggregate(pipeline))
+
+    # Return the data as a JSON response
+    return jsonify(result)
+
+
+# Average health score for each region
+@app.route("/aggregate/health_score_region", methods=["GET"])
+def aggregate_health_score_region():
+    pipeline = [
+        {"$sort": {"Health (Life Expectancy)": -1}},
+        {
+            "$group": {
+                "_id": "$Region",
+                "highestHealthCountry": {"$first": "$Country"},
+                "highestHealthScore": {"$first": "$Health (Life Expectancy)"},
+                "lowestHealthCountry": {"$last": "$Country"},
+                "lowestHealthScore": {"$last": "$Health (Life Expectancy)"},
+            }
+        },
+    ]
+    result = list(mongodb["world_data"].aggregate(pipeline))
+    return jsonify(result)
+
+
 # ------------------------------------------------------ ---------------------------------------------------------------------------------
 
 
+# ------------------------------------------------------ Junks ---------------------------------------------------------------------------------
 def get_random_integer(minimum, maximum):
     return random.randint(minimum, maximum)
-
-
-# save one response per json file to the database
-# @app.route("/survey", methods=["POST"])
-# def save_survey_data():
-#     survey_data = request.get_json()
-#
-#     # Save survey data to a JSON file
-#     with open("data/survey_data.json", "w") as file:
-#         json.dump(survey_data, file)
-#
-#     return jsonify({"message": "Survey data created successfully"})
-
-
-# save multiple responses per json file to the database
-# how to use: open mongoDBcompass, connection: mongodb://localhost:27017
-@app.route("/survey", methods=["POST"])
-def save_survey_data():
-    survey_data = request.get_json()
-
-    # Create a list to store the survey responses
-    responses = []
-
-    # Check if the JSON file exists
-    if os.path.exists("data/survey_data.json"):
-        # Load existing survey responses from the JSON file
-        with open("data/survey_data.json", "r") as file:
-            responses = json.load(file)
-
-    # Append the new survey response to the list
-    responses.append(survey_data)
-
-    # Save survey data to a JSON file
-    with open("data/survey_data.json", "w") as file:
-        json.dump(responses, file, indent=4)
-
-    return jsonify({"message": "Survey data created successfully"})
 
 
 @app.route("/users", methods=["GET"])

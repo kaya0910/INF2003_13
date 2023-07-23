@@ -6,10 +6,13 @@ import "./index.css";
 import { json } from "./json.js";
 import axios from "axios";
 import { BASE_URL } from "../../../constants";
+import { useContext } from "react";
+import { userContext } from "../../../Context/userContext";
 
 const SurveyQns = () => {
   const [jsonObj, setJsonObj] = useState(null);
   const survey = new Model(jsonObj);
+  const { userID } = useContext(userContext);
 
   useEffect(() => {
     axios.get(BASE_URL + "/survey_questions").then((res) => {
@@ -23,12 +26,22 @@ const SurveyQns = () => {
   }, []);
 
   survey.onComplete.add((sender, options) => {
-    const data = sender.data;
+    const surveyData = sender.data;
+
+    const convertedObject = Object.keys(surveyData.Survey).reduce(
+      (acc, key, index) => {
+        acc[`Q${index + 1}`] = surveyData.Survey[key];
+        return acc;
+      },
+      {}
+    );
+
+    const data = { ...convertedObject };
 
     console.log(data);
 
     // Make a POST request to localhost:3005/survey
-    fetch(BASE_URL + "/survey", {
+    fetch(BASE_URL + "/anonymous/survey", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -37,7 +50,7 @@ const SurveyQns = () => {
     })
       .then((response) => {
         if (response.ok) {
-          console.log("Survey data sent successfully");
+          console.log(data);
         } else {
           console.error("Failed to send survey data");
         }
