@@ -24,3 +24,23 @@ export const getByData = async () => {
   const res = await fetch(BASE_URL + "/byData");
   return await res.json();
 };
+
+export const getTopEconomies= async () => {
+  const res = await fetch(BASE_URL + "/aggregate/top_economies");
+  return await res.json();
+};
+
+export const getByAverageHappiness = async () => {
+  const res = await fetch(BASE_URL + "/aggregate/average_happiness_by_region");
+  return await res.json();
+};
+
+export const getByHighestLowestRegion = async () => {
+  const res = await fetch(BASE_URL + "/aggregate/highest_lowest_region");
+  return await res.json();
+};
+
+export const getByAggregateHealthScoreRegion = async () => {
+  const res = await fetch(BASE_URL + "/aggregate/health_score_region");
+  return await res.json();
+};
