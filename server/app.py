@@ -114,7 +114,7 @@ bcrypt = Bcrypt(app)
 
 # MySQL Connection
 db = mysql.connector.connect(
-    user="zaw", host="localhost", password="pw", database="happydb"
+    user="root", host="localhost", password="", database="happydb"
 )
 
 # ------------------------------------------------- Sign In, Sign Up & Sign Out  -----------------------------------------------------------------------------------
@@ -315,29 +315,6 @@ def get_happiness_by_region():
     with open("data/HPLvlByRegion.json", "r") as file:
         happiness_data = json.load(file)
     return jsonify(happiness_data)
-
-
-@app.route("/byHappiness", methods=["GET"])
-def get_happiness_by_world_data():
-    with open("data/world_data.json", "r") as file:
-        surveys = json.load(file)
-        region_scores = {}
-        region_counts = {}
-        for survey in surveys:
-            region = survey["Region"]
-            happiness_score = survey["Happiness Score"]
-            if region in region_scores:
-                region_scores[region] += happiness_score
-                region_counts[region] += 1
-            else:
-                region_scores[region] = happiness_score
-                region_counts[region] = 1
-        region_average_scores = {}
-        for region, score in region_scores.items():
-            count = region_counts[region]
-            average_score = score / count
-            region_average_scores[region] = average_score
-    return jsonify(region_average_scores)
 
 
 # Top economies
