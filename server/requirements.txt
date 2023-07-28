@@ -1,6 +1,6 @@
 flask
 pymongo
-Flask-CORS
+flask-cors
 flask-bcrypt 
 mysql-connector-python
 Flask-Session

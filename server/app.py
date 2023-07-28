@@ -140,7 +140,7 @@ def register():
     hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
 
     cursor.execute(
-        "INSERT INTO users (username, password, name) VALUES (%s, %s, %s, %s)",
+        "INSERT INTO users (username, password, name, country) VALUES (%s, %s, %s, %s)",
         (username, hashed_password, name, country),
     )
     db.commit()
@@ -161,6 +161,7 @@ def register():
                 "loggedIn": True,
                 "message": "Registration successful",
                 "userID": result[0],
+                "username": result[1],
                 "user": session["username"],
             }
         ),
@@ -187,7 +188,7 @@ def login_post():
                     "loggedIn": True,
                     "message": "/signin",
                     "userID": result[0],
-                    "username": session["username"],
+                    "username": result[1],
                 }
             )
         else:
@@ -282,6 +283,107 @@ def create_survey_data():
     # db.close()
 
     return "Survey data saved successfully!", 201
+
+
+# ----------------------------------------------- User Profile Update & Delete -------------------------------------------------------------------------
+# Route for updating username
+
+
+@app.route("/update/username", methods=["POST"])
+def update_username():
+    # Get the data from the request
+    data = request.json
+    userID = data.get("userID")
+    new_username = data.get("username")
+
+    if not userID or not new_username:
+        return (
+            jsonify(
+                {"message": "Invalid request. Please provide 'userID' and 'username'."}
+            ),
+            400,
+        )
+
+    cursor = db.cursor()
+
+    # Fetch the existing username using userID
+    select_query = "SELECT username FROM users WHERE userID = %s"
+    cursor.execute(select_query, (userID,))
+    result = cursor.fetchone()
+
+    if not result:
+        # User with the given userID not found
+        return jsonify({"message": "User not found."}), 404
+
+    old_username = result[0]
+
+    if old_username == new_username:
+        # No need to update if the username is the same
+        return jsonify({"message": "Username unchanged."}), 200
+
+    try:
+        # Update the username
+        update_query = "UPDATE users SET username = %s WHERE userID = %s"
+        cursor.execute(update_query, (new_username, userID))
+        db.commit()  # Commit the changes to the database
+
+        return jsonify({"message": "Username updated successfully."}), 200
+
+    except Exception as e:
+        # If an error occurs during the update, rollback the transaction
+        db.rollback()
+        return jsonify({"message": "Failed to update username.", "error": str(e)}), 500
+
+
+@app.route("/update/password", methods=["POST"])
+def update_password():
+    # Get the data from the request
+    data = request.json
+    userID = data.get("userID")
+    new_password = data.get("password")  # Assuming the new password is provided
+
+    if not userID or not new_password:
+        return (
+            jsonify(
+                {
+                    "message": "Invalid request. Please provide 'userID' and 'new_password'."
+                }
+            ),
+            400,
+        )
+
+    cursor = db.cursor()
+
+    # Fetch the existing password using userID
+    select_query = "SELECT password FROM users WHERE userID = %s"
+    cursor.execute(select_query, (userID,))
+    result = cursor.fetchone()
+
+    if not result:
+        # User with the given userID not found
+        return jsonify({"message": "User not found."}), 404
+
+    old_password = result[0]
+
+    if old_password == new_password:
+        # No need to update if the password is the same
+        return jsonify({"message": "Password unchanged."}), 200
+
+    try:
+        # Update the password
+        update_query = "UPDATE users SET password = %s WHERE userID = %s"
+
+        hashed_password = bcrypt.generate_password_hash(new_password).decode("utf-8")
+        cursor.execute(update_query, (hashed_password, userID))
+
+        db.commit()  # Commit the changes to the database
+
+        return jsonify({"message": "Password updated successfully."}), 200
+
+    except Exception as e:
+        # If an error occurs during the update, rollback the transaction
+        db.rollback()
+        return jsonify({"message": "Failed to update password.", "error": str(e)}), 500
 
 
 # ------------------------------------------------------ Aggregation - World Data ---------------------------------------------------------------------------------

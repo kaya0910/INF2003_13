@@ -7,7 +7,13 @@ import {
 } from "@ant-design/icons";
 
 import React, { useEffect, useState } from "react";
-import { getByGDP, getByAverageHappiness, getByData, getTopEconomies, getByHighestLowestRegion } from "../../../API";
+import {
+  getByGDP,
+  getByAverageHappiness,
+  getByData,
+  getTopEconomies,
+  getByHighestLowestRegion,
+} from "../../../API";
 
 import {
   Chart as ChartJS,
@@ -44,6 +50,7 @@ const Dashboard = () => {
     datasets: [],
   });
 
+
   useEffect(() => {
     getByAverageHappiness().then((data) => {
       const labels = data.map((entry) => entry._id);
@@ -57,7 +64,7 @@ const Dashboard = () => {
         },
       ];
       setChartData({ labels, datasets });
-    });      
+    });
 
     getByData().then((data) => {
       const labels = Object.keys(data);
@@ -145,30 +152,31 @@ const Dashboard = () => {
           />
         </Space>
         <div style={{ display: "flex" }}>
-        <div style={{ marginRight: "10px" }}>
-        <h2 style={{ textAlign: "center" }}>Question Counts</h2>
+          <div style={{ marginRight: "10px" }}>
+            <h2 style={{ textAlign: "center" }}>Question Counts</h2>
             <Card style={{ width: 700, height: 350, margin: 5 }}>
               <Bar options={dataChartOptions} data={dataChartData} />
             </Card>
-            </div>
-            <ScatterChart />
           </div>
+          <ScatterChart />
+        </div>
         <div style={{ display: "flex" }}>
           <div style={{ marginRight: "10px" }}>
-          <h2 style={{ textAlign: "center" }}>Average Happiness Score by Region</h2>
-          <Card style={{ width: 700, height: 350, margin: 5 }}>
+            <h2 style={{ textAlign: "center" }}>
+              Average Happiness Score by Region
+            </h2>
+            <Card style={{ width: 700, height: 350, margin: 5 }}>
               <Bar data={chartData} options={options} />
             </Card>
             <BarChart />
-            </div>
-            <div style={{ marginRight: "10px" }}>
-            <DataChart />
-            </div>
-            <div style={{ marginRight: "10px" }}></div>
-              
           </div>
+          <div style={{ marginRight: "10px" }}>
+            <DataChart />
+          </div>
+          <div style={{ marginRight: "10px" }}></div>
         </div>
       </div>
+    </div>
   );
 };
 
@@ -241,15 +249,16 @@ const DataChart = () => {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-  <h2 style={{ textAlign: "center" }}>Top Economies by GDP per Capita</h2>
-    <Card style={{ width: 800, height:400, margin: 5 }}>
-      <Bar data={chartData} options={options} />
-    </Card>
+    <div
+      style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+    >
+      <h2 style={{ textAlign: "center" }}>Top Economies by GDP per Capita</h2>
+      <Card style={{ width: 800, height: 400, margin: 5 }}>
+        <Bar data={chartData} options={options} />
+      </Card>
     </div>
   );
 };
-
 
 const ScatterChart = () => {
   const [dataSource, setDataSource] = useState({
@@ -299,7 +308,6 @@ const ScatterChart = () => {
   };
 
   return (
-    
     <Card style={{ width: 500, height: 250, margin: 5 }}>
       <Scatter options={options} data={dataSource} />
     </Card>
@@ -350,7 +358,9 @@ const BarChart = () => {
 
   return (
     <div>
-      <h2 style={{ textAlign: "center" }}>Highest and Lowest Health Scores by Region</h2>
+      <h2 style={{ textAlign: "center" }}>
+        Highest and Lowest Health Scores by Region
+      </h2>
       <div style={{ width: 700, height: 500, margin: 5 }}>
         <Bar data={chartData} options={options} />
       </div>

@@ -17,7 +17,8 @@ import Results from "./Anonymous/Pages/Results";
 import Survey from "./Anonymous/Pages/Survey";
 
 import { userContext } from "./Context/userContext";
-import React, {useState } from "react";
+import React, { useState } from "react";
+import ProfilePage from "./pages/ProfilePage";
 
 const App = () => {
   const [username, setUsername] = useState("");
@@ -36,6 +37,7 @@ const App = () => {
         <Route path="/signin" element={<Login />} />
 
         <Route path="/user" element={<UserHome />}>
+          <Route path="profile" element={<ProfilePage />} />
           <Route path="dashboard" element={<UserDashboard />} />
           <Route path="survey" element={<UserSurvey />} />
           <Route path="results" element={<UserResults />} />

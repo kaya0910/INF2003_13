@@ -35,8 +35,8 @@ const SideMenu = () => {
             icon: <FundProjectionScreenOutlined />,
           },
           {
-            label: "Edit Survey",
-            key: "editsurvey",
+            label: "Edit Profile",
+            key: "profile",
             icon: <EditOutlined />,
           },
         ]}

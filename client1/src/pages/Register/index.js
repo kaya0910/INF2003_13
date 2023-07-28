@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Form, Input, Button, Typography } from "antd";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../../constants";
 import "./Register.css";
+import { userContext } from "../../Context/userContext";
 
 const { Title } = Typography;
 
@@ -11,12 +12,18 @@ const Register = () => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
 
+  const { setUsername, setUserID } = useContext(userContext);
+
   axios.defaults.withCredentials = true;
 
   const handleSubmit = async (values) => {
     try {
       const res = await axios.post(BASE_URL + "/signup", values);
       console.log("Data updated successfully:", res.data);
+
+      setUsername(res.data.username);
+      setUserID(res.data.userID);
+
       navigate("/user/dashboard");
     } catch (error) {
       console.error("Error updating data:", error);

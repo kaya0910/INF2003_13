@@ -54,7 +54,7 @@ const Dashboard = () => {
       console.log("Auth check", res.data);
 
       if (res.data.loggedIn) {
-        ///
+        
       } else {
         navigate("/user/dashboard");
       }
