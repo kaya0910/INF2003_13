@@ -27,6 +27,16 @@ app.config["SESSION_TYPE"] = "filesystem"
 app.secret_key = "dsdfsefsdfdsfdsfsdfdsbvgregrhethtdgdg"
 Session(app)
 
+# ------------------------------------------------- MySQL Setup, Session & Bcrypt-------------------------------------------------------------------------
+
+# Brycrpt Password
+bcrypt = Bcrypt(app)
+
+# MySQL Connection
+db = mysql.connector.connect(
+    user="zaw", host="localhost", password="pw", database="happydb"
+)
+
 
 # ------------------------------------------------- MongoDB -------------------------------------------------------------------------
 
@@ -107,16 +117,6 @@ class SurveyData:
         self.rating = rating
 
 
-# ------------------------------------------------- MySQL Setup, Session & Bcrypt-------------------------------------------------------------------------
-
-# Brycrpt Password
-bcrypt = Bcrypt(app)
-
-# MySQL Connection
-db = mysql.connector.connect(
-    user="root", host="localhost", password="", database="happydb"
-)
-
 # ------------------------------------------------- Sign In, Sign Up & Sign Out  -----------------------------------------------------------------------------------
 
 
@@ -125,6 +125,7 @@ def register():
     username = request.json["username"]
     password = request.json["password"]
     name = request.json["name"]
+    country = request.json["country"]
 
     cursor = db.cursor()
     cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
@@ -139,8 +140,8 @@ def register():
     hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
 
     cursor.execute(
-        "INSERT INTO users (username, password, name) VALUES (%s, %s, %s)",
-        (username, hashed_password, name),
+        "INSERT INTO users (username, password, name) VALUES (%s, %s, %s, %s)",
+        (username, hashed_password, name, country),
     )
     db.commit()
 

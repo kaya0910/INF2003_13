@@ -51,6 +51,15 @@ const Register = () => {
         >
           <Input />
         </Form.Item>
+
+        <Form.Item
+          name="country"
+          label="Country"
+          rules={[{ required: true, message: "Please enter your country" }]}
+        >
+          <Input />
+        </Form.Item>
+
         <Form.Item
           name="password"
           label="Password"
