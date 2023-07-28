@@ -7,7 +7,7 @@ import {
 } from "@ant-design/icons";
 
 import React, { useEffect, useState } from "react";
-import { getByGDP, getByHappiness, getByData } from "../../../API";
+import { getByGDP, getByAverageHappiness, getByData, getTopEconomies, getByHighestLowestRegion } from "../../../API";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -68,14 +68,14 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
-    getByHappiness().then((data) => {
-      const labels = Object.keys(data);
+    getByAverageHappiness().then((data) => {
+      const labels = data.map((entry) => entry._id);
       const datasets = [
         {
-          label: "Happiness Score",
-          data: Object.values(data),
-          backgroundColor: "rgba(255, 0, 0, 1)",
-          borderColor: "black",
+          label: "Average Happiness Score",
+          data: data.map((entry) => entry.averageHappinessScore),
+          backgroundColor: "rgba(255, 0, 0, 0.6)",
+          borderColor: "rgba(0, 123, 255, 1)",
           borderWidth: 1,
         },
       ];
@@ -126,7 +126,6 @@ const Dashboard = () => {
       },
       title: {
         display: true,
-        text: "Happiness Scores by Region",
       },
     },
   };
@@ -139,7 +138,6 @@ const Dashboard = () => {
       },
       title: {
         display: true,
-        text: "Question Counts",
       },
     },
   };
@@ -179,20 +177,29 @@ const Dashboard = () => {
           />
         </Space>
         <div style={{ display: "flex" }}>
+        <div style={{ marginRight: "10px" }}>
+        <h2 style={{ textAlign: "center" }}>Question Counts</h2>
             <Card style={{ width: 700, height: 350, margin: 5 }}>
-              <Bar options={options} data={dataChartData} />
+              <Bar options={dataChartOptions} data={dataChartData} />
             </Card>
+            </div>
             <ScatterChart />
           </div>
         <div style={{ display: "flex" }}>
           <div style={{ marginRight: "10px" }}>
+          <h2 style={{ textAlign: "center" }}>Average Happiness Score by Region</h2>
           <Card style={{ width: 700, height: 350, margin: 5 }}>
               <Bar data={chartData} options={options} />
             </Card>
+            <BarChart />
+            </div>
+            <div style={{ marginRight: "10px" }}>
+            <DataChart />
+            </div>
+            <div style={{ marginRight: "10px" }}></div>
           </div>
         </div>
       </div>
-    </div>
   );
 };
 
@@ -236,33 +243,21 @@ const DataChart = () => {
   });
 
   useEffect(() => {
-    getByData().then((data) => {
-      const labels = Object.keys(data);
-      const datasets = Object.entries(data[labels[0]]).map(([label, _]) => ({
-        label,
-        data: labels.map((l) => data[l][label]),
-        backgroundColor: getBackgroundColor(label),
-        borderColor: "black",
-        borderWidth: 1,
-      }));
+    getTopEconomies().then((data) => {
+      const labels = data.map((entry) => entry.Country);
+      const datasets = [
+        {
+          label: "Economy (GDP per Capita)",
+          data: data.map((entry) => entry["Economy (GDP per Capita)"]),
+          backgroundColor: "rgba(0, 123, 255, 0.6)",
+          borderColor: "rgba(0, 123, 255, 1)",
+          borderWidth: 1,
+        },
+      ];
 
       setChartData({ labels, datasets });
     });
   }, []);
-
-  const getBackgroundColor = (label) => {
-    if (label === "Agree") {
-      return "rgba(0, 255, 0, 1)";
-    } else if (label === "Neutral") {
-      return "rgba(255, 255, 0, 1)";
-    } else if (label === "Disagree") {
-      return "rgba(255, 165, 0, 1)";
-    } else if (label === "Strongly Agree") {
-      return "rgba(0, 0, 255, 1)";
-    } else if (label === "Strongly Disagree") {
-      return "rgba(255, 0, 0, 1)";
-    }
-  };
 
   const options = {
     responsive: true,
@@ -272,15 +267,17 @@ const DataChart = () => {
       },
       title: {
         display: true,
-        text: "Question Counts",
       },
     },
   };
 
   return (
-    <Card style={{ width: 800, height: 500, margin: 5 }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+  <h2 style={{ textAlign: "center" }}>Top Economies by GDP per Capita</h2>
+    <Card style={{ width: 800, height:400, margin: 5 }}>
       <Bar data={chartData} options={options} />
     </Card>
+    </div>
   );
 };
 
@@ -345,14 +342,21 @@ const BarChart = () => {
   });
 
   useEffect(() => {
-    getByHappiness().then((data) => {
-      const labels = Object.keys(data);
+    getByHighestLowestRegion().then((data) => {
+      const labels = data.map((entry) => entry._id);
       const datasets = [
         {
-          label: "Happiness Score",
-          data: Object.values(data),
-          backgroundColor: "rgba(255, 0, 0, 1)",
-          borderColor: "black",
+          label: "Highest Health Score",
+          data: data.map((entry) => entry.highestHealthScore),
+          backgroundColor: "rgba(0, 123, 255, 0.6)", // You can set the color as you prefer
+          borderColor: "rgba(0, 123, 255, 1)",
+          borderWidth: 1,
+        },
+        {
+          label: "Lowest Health Score",
+          data: data.map((entry) => entry.lowestHealthScore),
+          backgroundColor: "rgba(255, 0, 0, 0.6)",
+          borderColor: "rgba(255, 0, 0, 1)",
           borderWidth: 1,
         },
       ];
@@ -369,15 +373,14 @@ const BarChart = () => {
       },
       title: {
         display: true,
-        text: "Happiness Scores by Region",
       },
     },
   };
 
   return (
     <div>
-      <h2>Happiness Scores by Region</h2>
-      <div style={{ width: 500, height: 250, margin: 5 }}>
+      <h2 style={{ textAlign: "center" }}>Highest and Lowest Health Scores by Region</h2>
+      <div style={{ width: 700, height: 500, margin: 5 }}>
         <Bar data={chartData} options={options} />
       </div>
     </div>
