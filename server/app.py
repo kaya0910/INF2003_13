@@ -34,7 +34,7 @@ bcrypt = Bcrypt(app)
 
 # MySQL Connection
 db = mysql.connector.connect(
-    user="zaw", host="localhost", password="pw", database="happydb"
+    user="root", host="localhost", password="", database="happydb"
 )
 
 
