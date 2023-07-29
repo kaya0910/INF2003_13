@@ -386,6 +386,35 @@ def update_password():
         return jsonify({"message": "Failed to update password.", "error": str(e)}), 500
 
 
+@app.route("/delete/user", methods=["DELETE"])
+def delete_user():
+    try:
+        # Get userID from the request
+        data = request.json
+        userID = data.get("userID")
+
+        # Validate if userID is provided
+        if not userID:
+            return jsonify({"error": "userID is required"}), 400
+
+        # Connect to MySQL
+        cursor = db.cursor()
+
+        # Construct the SQL query
+        delete_query = "DELETE FROM users WHERE userID = %s"
+
+        # Execute the query with the provided userID
+        cursor.execute(delete_query, (userID,))
+
+        # Commit the changes to the database
+        db.commit()
+
+        return jsonify({"message": "User deleted successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 # ------------------------------------------------------ Aggregation - World Data ---------------------------------------------------------------------------------
 @app.route("/byData", methods=["GET"])
 def get_happiness_by_data():
